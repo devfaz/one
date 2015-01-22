@@ -302,6 +302,9 @@ void RequestManager::register_xml_methods()
     xmlrpc_c::methodPtr vm_pool_acct(new VirtualMachinePoolAccounting());
     xmlrpc_c::methodPtr vm_pool_monitoring(new VirtualMachinePoolMonitoring());
 
+    xmlrpc_c::methodPtr vm_pool_showback(new VirtualMachinePoolShowback());
+    xmlrpc_c::methodPtr vm_pool_calculate_showback(new VirtualMachinePoolCalculateShowback());
+
     // VirtualNetwork Methods
     xmlrpc_c::methodPtr vn_add_ar(new VirtualNetworkAddAddressRange());
     xmlrpc_c::methodPtr vn_rm_ar(new VirtualNetworkRmAddressRange());
@@ -320,6 +323,7 @@ void RequestManager::register_xml_methods()
     xmlrpc_c::methodPtr datastore_update(new DatastoreUpdateTemplate());
     xmlrpc_c::methodPtr doc_update(new DocumentUpdateTemplate());
     xmlrpc_c::methodPtr cluster_update(new ClusterUpdateTemplate());
+    xmlrpc_c::methodPtr secg_update(new SecurityGroupUpdateTemplate());
 
     // Allocate Methods
     xmlrpc_c::methodPtr vm_allocate(new VirtualMachineAllocate());
@@ -330,10 +334,12 @@ void RequestManager::register_xml_methods()
     xmlrpc_c::methodPtr datastore_allocate(new DatastoreAllocate());
     xmlrpc_c::methodPtr cluster_allocate(new ClusterAllocate());
     xmlrpc_c::methodPtr doc_allocate(new DocumentAllocate());
+    xmlrpc_c::methodPtr secg_allocate(new SecurityGroupAllocate());
 
     // Clone Methods
     xmlrpc_c::methodPtr template_clone(new VMTemplateClone());
     xmlrpc_c::methodPtr doc_clone(new DocumentClone());
+    xmlrpc_c::methodPtr secg_clone(new SecurityGroupClone());
 
     // Delete Methods
     xmlrpc_c::methodPtr host_delete(new HostDelete());
@@ -343,6 +349,7 @@ void RequestManager::register_xml_methods()
     xmlrpc_c::methodPtr datastore_delete(new DatastoreDelete());
     xmlrpc_c::methodPtr cluster_delete(new ClusterDelete());
     xmlrpc_c::methodPtr doc_delete(new DocumentDelete());
+    xmlrpc_c::methodPtr secg_delete(new SecurityGroupDelete());
 
     // Info Methods
     xmlrpc_c::methodPtr vm_info(new VirtualMachineInfo());
@@ -353,6 +360,7 @@ void RequestManager::register_xml_methods()
     xmlrpc_c::methodPtr datastore_info(new DatastoreInfo());
     xmlrpc_c::methodPtr cluster_info(new ClusterInfo());
     xmlrpc_c::methodPtr doc_info(new DocumentInfo());
+    xmlrpc_c::methodPtr secg_info(new SecurityGroupInfo());
 
     // PoolInfo Methods
     xmlrpc_c::methodPtr hostpool_info(new HostPoolInfo());
@@ -363,6 +371,7 @@ void RequestManager::register_xml_methods()
     xmlrpc_c::methodPtr imagepool_info(new ImagePoolInfo());
     xmlrpc_c::methodPtr clusterpool_info(new ClusterPoolInfo());
     xmlrpc_c::methodPtr docpool_info(new DocumentPoolInfo());
+    xmlrpc_c::methodPtr secgpool_info(new SecurityGroupPoolInfo());
 
     // Host Methods
     xmlrpc_c::methodPtr host_enable(new HostEnable());
@@ -382,6 +391,7 @@ void RequestManager::register_xml_methods()
     xmlrpc_c::methodPtr image_chown(new ImageChown());
     xmlrpc_c::methodPtr datastore_chown(new DatastoreChown());
     xmlrpc_c::methodPtr doc_chown(new DocumentChown());
+    xmlrpc_c::methodPtr secg_chown(new SecurityGroupChown());
 
     // Chmod Methods
     xmlrpc_c::methodPtr vm_chmod(new VirtualMachineChmod());
@@ -390,6 +400,7 @@ void RequestManager::register_xml_methods()
     xmlrpc_c::methodPtr image_chmod(new ImageChmod());
     xmlrpc_c::methodPtr datastore_chmod(new DatastoreChmod());
     xmlrpc_c::methodPtr doc_chmod(new DocumentChmod());
+    xmlrpc_c::methodPtr secg_chmod(new SecurityGroupChmod());
 
     // Cluster Methods
     xmlrpc_c::methodPtr cluster_addhost(new ClusterAddHost());
@@ -412,6 +423,7 @@ void RequestManager::register_xml_methods()
     xmlrpc_c::methodPtr cluster_rename(new ClusterRename());
     xmlrpc_c::methodPtr datastore_rename(new DatastoreRename());
     xmlrpc_c::methodPtr host_rename(new HostRename());
+    xmlrpc_c::methodPtr secg_rename(new SecurityGroupRename());
 
     /* VM related methods  */
     RequestManagerRegistry.addMethod("one.vm.deploy", vm_deploy);
@@ -438,6 +450,8 @@ void RequestManager::register_xml_methods()
     RequestManagerRegistry.addMethod("one.vmpool.info", vm_pool_info);
     RequestManagerRegistry.addMethod("one.vmpool.accounting", vm_pool_acct);
     RequestManagerRegistry.addMethod("one.vmpool.monitoring", vm_pool_monitoring);
+    RequestManagerRegistry.addMethod("one.vmpool.showback", vm_pool_showback);
+    RequestManagerRegistry.addMethod("one.vmpool.calculateshowback", vm_pool_calculate_showback);
 
     /* VM Template related methods*/
     RequestManagerRegistry.addMethod("one.template.update", template_update);
@@ -719,6 +733,20 @@ void RequestManager::register_xml_methods()
     RequestManagerRegistry.addMethod("one.zone.rename",  zone_rename);
 
     RequestManagerRegistry.addMethod("one.zonepool.info",zonepool_info);
+
+    /* Security Group objects related methods*/
+
+    RequestManagerRegistry.addMethod("one.secgroup.allocate",secg_allocate);
+    RequestManagerRegistry.addMethod("one.secgroup.delete",  secg_delete);
+    RequestManagerRegistry.addMethod("one.secgroup.info",    secg_info);
+    RequestManagerRegistry.addMethod("one.secgroup.update",  secg_update);
+    RequestManagerRegistry.addMethod("one.secgroup.chown",   secg_chown);
+    RequestManagerRegistry.addMethod("one.secgroup.chmod",   secg_chmod);
+    RequestManagerRegistry.addMethod("one.secgroup.clone",   secg_clone);
+    RequestManagerRegistry.addMethod("one.secgroup.rename",  secg_rename);
+
+    RequestManagerRegistry.addMethod("one.secgrouppool.info",secgpool_info);
+
 
     /* System related methods */
     RequestManagerRegistry.addMethod("one.system.version", system_version);

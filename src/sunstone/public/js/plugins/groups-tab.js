@@ -144,6 +144,7 @@ function create_group_tmpl(dialog_name){
               <th/>\
               <th>'+tr("VMs")+'</th>\
               <th>'+tr("VNets")+'</th>\
+              <th>'+tr("Security Groups")+'</th>\
               <th>'+tr("Images")+'</th>\
               <th>'+tr("Templates")+'</th>\
               <th>'+tr("Documents")+'<span class="tip">'+tr("Documents are a special tool used for general purposes, mainly by OneFlow. If you want to enable users of this group to use service composition via OneFlow, let it checked.")+'</span></th>\
@@ -153,6 +154,7 @@ function create_group_tmpl(dialog_name){
                 <th>'+tr("Users")+'</th>\
                 <td><input type="checkbox" id="group_res_vm" name="group_res_vm" class="resource_cb" value="VM"></input></td>\
                 <td><input type="checkbox" id="group_res_net" name="group_res_net" class="resource_cb" value="NET"></input></td>\
+                <td><input type="checkbox" id="group_res_sg" name="group_res_sg" class="resource_cb" value="SECGROUP"></input></td>\
                 <td><input type="checkbox" id="group_res_image" name="group_res_image" class="resource_cb" value="IMAGE"></input></td>\
                 <td><input type="checkbox" id="group_res_template" name="group_res_template" class="resource_cb" value="TEMPLATE"></input></td>\
                 <td><input type="checkbox" id="group_res_document" name="group_res_document" class="resource_cb" value="DOCUMENT"></input></td>\
@@ -162,6 +164,7 @@ function create_group_tmpl(dialog_name){
                 <th>'+tr("Admins")+'</th>\
                 <td><input type="checkbox" id="group_admin_res_vm" name="group_admin_res_vm" class="resource_cb" value="VM"></input></td>\
                 <td><input type="checkbox" id="group_admin_res_net" name="group_admin_res_net" class="resource_cb" value="NET"></input></td>\
+                <td><input type="checkbox" id="group_admin_res_sg" name="group_admin_res_sg" class="resource_cb" value="SECGROUP"></input></td>\
                 <td><input type="checkbox" id="group_admin_res_image" name="group_admin_res_image" class="resource_cb" value="IMAGE"></input></td>\
                 <td><input type="checkbox" id="group_admin_res_template" name="group_admin_res_template" class="resource_cb" value="TEMPLATE"></input></td>\
                 <td><input type="checkbox" id="group_admin_res_document" name="group_admin_res_document" class="resource_cb" value="DOCUMENT"></input></td>\
@@ -435,7 +438,7 @@ var groups_tab = {
     buttons: group_buttons,
     tabClass: 'subTab',
     parentTab: 'system-tab',
-    search_input: '<input id="group_search" type="text" placeholder="'+tr("Search")+'" />',
+    search_input: '<input id="group_search" type="search" placeholder="'+tr("Search")+'" />',
     list_header: '<i class="fa fa-fw fa-users"></i>&emsp;'+tr("Groups"),
     info_header: '<i class="fa fa-fw fa-users"></i>&emsp;'+tr("Group"),
     subheader: '<span>\
@@ -510,32 +513,28 @@ function groupElementArray(group_json){
         }
     }
 
-    var vms = "-";
-    var memory = "-";
-    var cpu = "-";
+    var vms    = '<span class="progress-text right" style="font-size: 12px">-</span>';
+    var memory = '<span class="progress-text right" style="font-size: 12px">-</span>';
+    var cpu    = '<span class="progress-text right" style="font-size: 12px">-</span>';
+
+    initEmptyQuotas(group);
 
     if (!$.isEmptyObject(group.VM_QUOTA)){
 
-        var vms = quotaBar(
+        vms = quotaBar(
             group.VM_QUOTA.VM.VMS_USED,
             group.VM_QUOTA.VM.VMS,
             default_group_quotas.VM_QUOTA.VM.VMS);
 
-        var memory = quotaBarMB(
+        memory = quotaBarMB(
             group.VM_QUOTA.VM.MEMORY_USED,
             group.VM_QUOTA.VM.MEMORY,
             default_group_quotas.VM_QUOTA.VM.MEMORY);
 
-        var cpu = quotaBarFloat(
+        cpu = quotaBarFloat(
             group.VM_QUOTA.VM.CPU_USED,
             group.VM_QUOTA.VM.CPU,
             default_group_quotas.VM_QUOTA.VM.CPU);
-    } else {
-
-        var vms = quotaBar(0,0,null);
-        var memory = quotaBarMB(0,0,null);
-        var cpu = quotaBarFloat(0,0,null);
-
     }
 
     return [
@@ -734,11 +733,29 @@ function updateGroupInfo(request,group){
         content: '<div id="group_accounting"></div>'
     };
 
+
     Sunstone.updateInfoPanelTab("group_info_panel","group_info_tab",info_tab);
     Sunstone.updateInfoPanelTab("group_info_panel","group_quotas_tab",quotas_tab);
     Sunstone.updateInfoPanelTab("group_info_panel","group_providers_tab",providers_tab);
-    Sunstone.updateInfoPanelTab("group_info_panel","group_accouning_tab",accounting_tab);
+    Sunstone.updateInfoPanelTab("group_info_panel","group_accounting_tab",accounting_tab);
+
+    if (Config.isFeatureEnabled("showback")) {
+      var showback_tab = {
+          title: tr("Showback"),
+          icon: "fa-money",
+          content: '<div id="group_showback"></div>'
+      };
+
+      Sunstone.updateInfoPanelTab("group_info_panel","group_showback_tab",showback_tab);
+    }
+
     Sunstone.popUpInfoPanel("group_info_panel", 'groups-tab');
+
+    if (Config.isFeatureEnabled("showback")) {
+      showbackGraphs(
+          $("#group_showback","#group_info_panel"),
+          {   fixed_group: info.ID });
+    }
 
     $("#add_rp_button", $("#group_info_panel")).click(function(){
         initUpdateGroupDialog();

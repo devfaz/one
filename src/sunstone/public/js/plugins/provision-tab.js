@@ -557,11 +557,11 @@ var provision_create_vm = '<form id="provision_create_vm" class="hidden section_
         '<div class="provision_capacity_selector">'+
         '</div>'+
         '<br>'+
-        '<br>'+
+        '<br>' +
         '<div class="provision_network_selector">'+
         '</div>'+
         '<br>'+
-        '<br>'+
+        '<br>' +
         '<div class="provision_custom_attributes_selector">'+
         '</div>'+
     '</div>'+
@@ -669,6 +669,263 @@ var provision_create_flow = '<form id="provision_create_flow" class="hidden sect
   '<br>'+
 '</form>';
 
+var provision_quota_widget = '<div class="row">'+
+  '<div class="large-12 large-centered columns">'+
+    '<h5 class="subheader text-right">'+
+      '<span class="left" style="margin-bottom: 0.5em">'+
+        tr("Running VMs")+
+      '</span>'+
+    '</h5>'+
+  '</div>'+
+'</div>'+
+'<div class="row provision_rvms_quota">'+
+  '<div class="medium-3 small-12 columns">'+
+    '<select class="provision_quota_select">'+
+      '<option value="edit">'+tr("Manual")+'</option>'+
+      '<option value="unlimited">'+tr("Unlimited")+'</option>'+
+      '<option value="default">'+tr("Default")+'</option>'+
+    '</select>'+
+  '</div>'+
+  '<div class="medium-9 small-12 columns provision_quota_edit">'+
+    '<div class="row collapse">'+
+      '<div class="small-9 columns">'+
+        '<div class="range-slider radius provision_rvms_quota_slider" data-slider data-options="start: 0; end: 50;">'+
+          '<span class="range-slider-handle"></span>'+
+          '<span class="range-slider-active-segment"></span>'+
+          '<input type="hidden">'+
+        '</div>'+
+      '</div>'+
+      '<div class="large-2 small-2 columns">'+
+        '<input type="text"  class="provision-input provision_rvms_quota_input" style="margin-top: -7px; height: 40px !important; font-size: 16px; padding: 0.5rem  !important;"/>'+
+      '</div>'+
+    '</div>'+
+  '</div>'+
+  '<div class="medium-9 small-12 columns provision_quota_unlimited" style="display:none">'+
+    '<span style="font-size: 18px; color: #999">'+
+      tr("Unlimited. VDC quotas will still apply")+
+    '</span>'+
+  '</div>'+
+  '<div class="medium-9 small-12 columns provision_quota_default" style="display:none">'+
+    '<span style="font-size: 18px; color: #999">'+
+      tr("Use the default system quotas set by the cloud adminstrator")+
+    '</span>'+
+  '</div>'+
+'</div>'+
+'<div class="row">'+
+  '<div class="large-12 large-centered columns">'+
+    '<h5 class="subheader text-right">'+
+      '<span class="left" style="margin-bottom: 0.5em">'+
+        tr("CPU")+
+      '</span>'+
+    '</h5>'+
+  '</div>'+
+'</div>'+
+'<div class="row provision_cpu_quota">'+
+  '<div class="medium-3 small-12 columns">'+
+    '<select class="provision_quota_select">'+
+      '<option value="edit">'+tr("Manual")+'</option>'+
+      '<option value="unlimited">'+tr("Unlimited")+'</option>'+
+      '<option value="default">'+tr("Default")+'</option>'+
+    '</select>'+
+  '</div>'+
+  '<div class="medium-9 small-12 columns provision_quota_edit">'+
+    '<div class="row collapse">'+
+      '<div class="small-9 columns">'+
+        '<div class="range-slider radius provision_cpu_quota_slider" data-slider data-options="start: 0; end: 50;">'+
+          '<span class="range-slider-handle"></span>'+
+          '<span class="range-slider-active-segment"></span>'+
+          '<input type="hidden">'+
+        '</div>'+
+      '</div>'+
+      '<div class="large-2 small-2 columns">'+
+        '<input type="text"  class="provision-input provision_cpu_quota_input" style="margin-top: -7px; height: 40px !important; font-size: 16px; padding: 0.5rem  !important;"/>'+
+      '</div>'+
+    '</div>'+
+  '</div>'+
+  '<div class="medium-9 small-12 columns provision_quota_unlimited" style="display:none">'+
+    '<span style="font-size: 18px; color: #999">'+
+      tr("Unlimited. VDC quotas will still apply")+
+    '</span>'+
+  '</div>'+
+  '<div class="medium-9 small-12 columns provision_quota_default" style="display:none">'+
+    '<span style="font-size: 18px; color: #999">'+
+      tr("Use the default system quotas set by the cloud adminstrator")+
+    '</span>'+
+  '</div>'+
+'</div>'+
+'<div class="row">'+
+  '<div class="large-12 large-centered columns">'+
+    '<h5 class="subheader text-right">'+
+      '<span class="left" style="margin-bottom: 0.5em">'+
+        tr("Memory (GBs)")+
+      '</span>'+
+    '</h5>'+
+  '</div>'+
+'</div>'+
+'<div class="vm_param">'+
+    '<input type="hidden" class="provision_memory_quota_input"/>'+
+'</div>'+
+'<div class="row provision_memory_quota">'+
+  '<div class="medium-3 small-12 columns">'+
+    '<select class="provision_quota_select">'+
+      '<option value="edit">'+tr("Manual")+'</option>'+
+      '<option value="unlimited">'+tr("Unlimited")+'</option>'+
+      '<option value="default">'+tr("Default")+'</option>'+
+    '</select>'+
+  '</div>'+
+  '<div class="medium-9 small-12 columns provision_quota_edit">'+
+    '<div class="row collapse">'+
+      '<div class="small-9 columns">'+
+        '<div class="range-slider radius provision_memory_quota_slider" data-slider data-options="start: 0; end: 50;">'+
+          '<span class="range-slider-handle"></span>'+
+          '<span class="range-slider-active-segment"></span>'+
+          '<input type="hidden">'+
+        '</div>'+
+      '</div>'+
+      '<div class="large-2 small-2 columns">'+
+        '<input type="text"  class="provision-input provision_memory_quota_tmp_input" style="margin-top: -7px; height: 40px !important; font-size: 16px; padding: 0.5rem  !important;"/>'+
+      '</div>'+
+    '</div>'+
+  '</div>'+
+  '<div class="medium-9 small-12 columns provision_quota_unlimited" style="display:none">'+
+    '<span style="font-size: 18px; color: #999">'+
+      tr("Unlimited. VDC quotas will still apply")+
+    '</span>'+
+  '</div>'+
+  '<div class="medium-9 small-12 columns provision_quota_default" style="display:none">'+
+    '<span style="font-size: 18px; color: #999">'+
+      tr("Use the default system quotas set by the cloud adminstrator")+
+    '</span>'+
+  '</div>'+
+'</div>';
+
+function setup_provision_quota_widget(context){
+    // Mode selector, for the 3 sliders
+    $("select.provision_quota_select", context).on('change', function(){
+      var row = $(this).closest(".row");
+
+      switch($(this).val()) {
+        case "edit":
+          $("div.provision_quota_edit", row).show();
+          $("div.provision_quota_default", row).hide();
+          $("div.provision_quota_unlimited", row).hide();
+
+          $("input", row).change();
+
+          break;
+
+        case "default":
+          $("div.provision_quota_edit", row).hide();
+          $("div.provision_quota_default", row).show();
+          $("div.provision_quota_unlimited", row).hide();
+
+          break;
+
+        case "unlimited":
+          $("div.provision_quota_edit", row).hide();
+          $("div.provision_quota_default", row).hide();
+          $("div.provision_quota_unlimited", row).show();
+
+          break;
+      }
+
+      return false;
+    });
+
+    var provision_rvms_quota_input = $(".provision_rvms_quota_input", context);
+
+    $( ".provision_rvms_quota_slider", context).on('change', function(){
+      provision_rvms_quota_input.val($(this).attr('data-slider'))
+    });
+
+    provision_rvms_quota_input.change(function() {
+        $( ".provision_rvms_quota_slider", context).foundation(
+                                            'slider', 'set_value', this.value);
+    });
+
+    var provision_cpu_quota_input = $(".provision_cpu_quota_input", context);
+
+    $( ".provision_cpu_quota_slider", context).on('change', function(){
+      provision_cpu_quota_input.val($(this).attr('data-slider'))
+    });
+
+    provision_cpu_quota_input.change(function() {
+        $( ".provision_cpu_quota_slider", context).foundation(
+                                            'slider', 'set_value', this.value);
+    });
+
+    var provision_memory_quota_input = $(".provision_memory_quota_input", context);
+    var provision_memory_quota_tmp_input = $(".provision_memory_quota_tmp_input", context);
+
+    var update_final_memory_input = function() {
+      var value = provision_memory_quota_tmp_input.val();
+      if (value > 0) {
+       provision_memory_quota_input.val( Math.floor(value * 1024) );
+      } else {
+       provision_memory_quota_input.val(value);
+      }
+    }
+
+    $( ".provision_memory_quota_slider", context).on('change', function(){
+      provision_memory_quota_tmp_input.val($(this).attr('data-slider'));
+      update_final_memory_input();
+    });
+
+    provision_memory_quota_tmp_input.change(function() {
+        update_final_memory_input();
+        $( ".provision_memory_quota_slider", context).foundation(
+                                            'slider', 'set_value', this.value);
+    });
+
+    $(".provision_rvms_quota_input", context).val('').change();
+    $(".provision_memory_quota_input", context).val('').change();
+    $(".provision_memory_quota_tmp_input", context).val('').change();
+    $(".provision_cpu_quota_input", context).val('').change();
+}
+
+function reset_provision_quota_widget(context){
+  $("select.provision_quota_select", context).val('edit').change();
+
+  $(".provision_rvms_quota_input", context).val('').change();
+  $(".provision_memory_quota_input", context).val('').change();
+  $(".provision_memory_quota_tmp_input", context).val('').change();
+  $(".provision_cpu_quota_input", context).val('').change();
+}
+
+function retrieve_provision_quota_widget(context){
+  var retrieve_quota = function(select, input){
+    switch(select.val()) {
+      case "edit":
+        return input.val();
+      case "default":
+        return QUOTA_LIMIT_DEFAULT;
+      case "unlimited":
+        return QUOTA_LIMIT_UNLIMITED;
+    }
+  }
+
+  var vms_limit = retrieve_quota(
+        $(".provision_rvms_quota select.provision_quota_select", context),
+        $(".provision_rvms_quota_input", context));
+
+  var cpu_limit = retrieve_quota(
+        $(".provision_cpu_quota select.provision_quota_select", context),
+        $(".provision_cpu_quota_input", context));
+
+  var mem_limit = retrieve_quota(
+        $(".provision_memory_quota select.provision_quota_select", context),
+        $(".provision_memory_quota_input", context));
+
+  return {
+    "VM" : {
+      "VOLATILE_SIZE": QUOTA_LIMIT_DEFAULT,
+      "VMS":    vms_limit,
+      "MEMORY": mem_limit,
+      "CPU":    cpu_limit
+    }
+  };
+}
+
 var provision_create_user = '<form id="provision_create_user" class="hidden section_content">'+
   '<div class="row">'+
     '<div class="large-10 large-centered columns">'+
@@ -709,81 +966,22 @@ var provision_create_user = '<form id="provision_create_user" class="hidden sect
   '<br>'+
   '<div class="row">'+
     '<div class="large-8 large-centered columns">'+
-      '<h5 class="subheader text-right">'+
-        '<span class="left">'+
-          tr("Running VMs")+
-        '</span>'+
-      '</h5>'+
-      '<br>'+
-    '</div>'+
-  '</div>'+
-  '<div class="row">'+
-    '<div class="large-8 large-centered columns">'+
-      '<div class="row collapse">'+
-        '<div class="large-9 small-9 columns">'+
-          '<div class="range-slider radius provision_rvms_quota_slider" data-slider data-options="start: 1; end: 50;">'+
-            '<span class="range-slider-handle"></span>'+
-            '<span class="range-slider-active-segment"></span>'+
-            '<input type="hidden">'+
+      '<dl class="tabs text-center" data-tab style="width: 100%">'+
+        '<dd class="active" style="width: 50%;"><a href="#provision_create_user_default_quota">'+ tr("Default") +'</a></dd>'+
+        '<dd style="width: 50%;"><a href="#provision_create_user_manual_quota">'+ tr("Manual") +'</a></dd>'+
+      '</dl>'+
+      '<div class="tabs-content">'+
+        '<div class="content active" id="provision_create_user_default_quota">'+
+          '<div class="row">'+
+            '<div class="large-12 large-centered columns">'+
+              '<span style="font-size: 18px; color: #999">'+
+                tr("Use the default system quotas set by the cloud adminstrator")+
+              '</span>'+
+            '</div>'+
           '</div>'+
         '</div>'+
-        '<div class="large-2 small-2 columns">'+
-          '<input type="text"  class="provision-input provision_rvms_quota_input" style="margin-top: -17px; height: 40px !important; font-size: 16px; padding: 0.5rem  !important;"/>'+
-        '</div>'+
-      '</div>'+
-    '</div>'+
-  '</div>'+
-  '<div class="row">'+
-    '<div class="large-8 large-centered columns">'+
-      '<h5 class="subheader text-right">'+
-        '<span class="left">'+
-          tr("CPU")+
-        '</span>'+
-      '</h5>'+
-      '<br>'+
-    '</div>'+
-  '</div>'+
-  '<div class="row">'+
-    '<div class="large-8 large-centered columns">'+
-      '<div class="row collapse">'+
-        '<div class="large-9 small-9 columns">'+
-          '<div class="range-slider radius provision_cpu_quota_slider" data-slider data-options="start: 1; end: 50;">'+
-            '<span class="range-slider-handle"></span>'+
-            '<span class="range-slider-active-segment"></span>'+
-            '<input type="hidden">'+
-          '</div>'+
-        '</div>'+
-        '<div class="large-2 small-2 columns">'+
-          '<input type="text"  class="provision-input provision_cpu_quota_input" style="margin-top: -17px; height: 40px !important; font-size: 16px; padding: 0.5rem  !important;"/>'+
-        '</div>'+
-      '</div>'+
-    '</div>'+
-  '</div>'+
-  '<div class="row">'+
-    '<div class="large-8 large-centered columns">'+
-      '<h5 class="subheader text-right">'+
-        '<span class="left">'+
-          tr("Memory (GBs)")+
-        '</span>'+
-      '</h5>'+
-      '<br>'+
-    '</div>'+
-  '</div>'+
-  '<div class="vm_param">'+
-      '<input type="hidden" class="provision_memory_quota_input"/>'+
-  '</div>'+
-  '<div class="row">'+
-    '<div class="large-8 large-centered columns">'+
-      '<div class="row collapse">'+
-        '<div class="large-9 small-9 columns">'+
-          '<div class="range-slider radius provision_memory_quota_slider" data-slider data-options="start: 1; end: 50;">'+
-            '<span class="range-slider-handle"></span>'+
-            '<span class="range-slider-active-segment"></span>'+
-            '<input type="hidden">'+
-          '</div>'+
-        '</div>'+
-        '<div class="large-2 small-2 columns">'+
-          '<input type="text"  class="provision-input provision_memory_quota_tmp_input"  style="margin-top: -17px; height: 40px !important; font-size: 16px; padding: 0.5rem  !important;"/>'+
+        '<div class="content" id="provision_create_user_manual_quota">'+
+          provision_quota_widget+
         '</div>'+
       '</div>'+
     '</div>'+
@@ -825,9 +1023,10 @@ var provision_user_info = '<div id="provision_user_info" class="hidden section_c
   '<div class="row">'+
     '<div class="large-12 large-centered columns">'+
       '<dl class="tabs text-center" data-tab style="width: 100%">'+
-        '<dd class="active" style="width: 34%;"><a href="#provision_info_settings"><i class="fa fa-fw fa-lg fa-cogs"/>&emsp;'+ tr("Settings") +'</a></dd>'+
-        '<dd style="width: 33%;"><a href="#provision_info_acct"><i class="fa fa-fw fa-lg fa-bar-chart-o"/>&emsp;'+ tr("Accounting") +'</a></dd>'+
-        '<dd style="width: 33%;"><a href="#provision_info_quotas"><i class="fa fa-fw fa-lg fa-align-left"/>&emsp;'+ tr("Quotas") +'</a></dd>'+
+        '<dd class="active" style="width: '+ (Config.isFeatureEnabled("showback") ? '25%' : '33%')+';"><a href="#provision_info_settings"><i class="fa fa-fw fa-lg fa-cogs"/>&emsp;'+ tr("Settings") +'</a></dd>'+
+        (Config.isFeatureEnabled("showback") ? '<dd style="width: 25%;"><a href="#provision_info_showback"><i class="fa fa-fw fa-lg fa-money"/>&emsp;'+ tr("Showback") +'</a></dd>' : '') +
+        '<dd style="width: '+ (Config.isFeatureEnabled("showback") ? '25%' : '33%')+';"><a href="#provision_info_acct"><i class="fa fa-fw fa-lg fa-bar-chart-o"/>&emsp;'+ tr("Accounting") +'</a></dd>'+
+        '<dd style="width: '+ (Config.isFeatureEnabled("showback") ? '25%' : '33%')+';"><a href="#provision_info_quotas"><i class="fa fa-fw fa-lg fa-align-left"/>&emsp;'+ tr("Quotas") +'</a></dd>'+
       '</dl>'+
       '<br>'+
     '</div>'+
@@ -839,6 +1038,12 @@ var provision_user_info = '<div id="provision_user_info" class="hidden section_c
         '</div>'+
       '</div>'+
     '</div>'+
+    (Config.isFeatureEnabled("showback") ? '<div class="content" id="provision_info_showback">'+
+      '<div class="row">'+
+        '<div id="provision_user_info_showback_div" class="large-12 large-centered columns">'+
+        '</div>'+
+      '</div>'+
+    '</div>' : '')+
     '<div class="content" id="provision_info_quotas">'+
       '<div class="row">'+
         '<div id="provision_user_info_quotas_div" class="large-9 large-centered columns quotas">'+
@@ -1199,6 +1404,21 @@ var provision_manage_vdc = '<div id="provision_manage_vdc" class="hidden section
         '</div>'+
       '</div>'+
       '<br>'+
+      (Config.isFeatureEnabled("showback") ? '<div class="row">'+
+        '<div class="large-11 large-centered columns">'+
+          '<h3 class="subheader text-right">'+
+            '<span class="left">'+
+              tr("VDC Showback")+
+            '</span>'+
+          '</h3>'+
+        '</div>'+
+      '</div>'+
+      '<br>'+
+      '<div class="row">'+
+        '<div  id="provision_info_vdc_group_showback" class="large-10 large-centered columns">'+
+        '</div>'+
+      '</div>'+
+      '<br>' : '') +
       '<div class="row">'+
         '<div class="large-11 large-centered columns">'+
           '<h3 class="subheader text-right">'+
@@ -1297,18 +1517,19 @@ var provision_info_vm =
     '<div class="large-12 large-centered columns">'+
       '<ul class="inline-list provision_action_icons">'+
         '<li>'+
-          '<a href"#" data-tooltip title="Open a VNC console in a new window" class="left button medium radius provision_vnc_button tip-top">'+
+          '<a href"#" data-tooltip title="Open a remote console in a new window" class="left button medium radius provision_vnc_button tip-top">'+
             '<i class="fa fa-fw fa-lg fa-desktop"/> '+
           '</a>'+
           '<a data-tooltip title="You have to boot the Virtual Machine first" class="left button medium radius white provision_vnc_button_disabled tip-top" style="color: #999">'+
             '<i class="fa fa-fw fa-lg fa-desktop"/> '+
           '</a>'+
-          '<a href"#" data-tooltip title="The main disk of the Virtual Machine will be saved in a new Image" class="left button medium radius success provision_snapshot_button tip-top">'+
-            '<i class="fa fa-fw fa-lg fa-save"/> '+
-          '</a>'+
-          '<a data-tooltip title="You have to power-off the virtual machine first" class="left button medium radius white provision_snapshot_button_disabled tip-top" style="color: #999">'+
-            '<i class="fa fa-fw fa-lg fa-save"/> '+
-          '</a>'+
+          (Config.isTabPanelEnabled("provision-tab", "templates") ?
+            '<a href"#" data-tooltip title="The main disk of the Virtual Machine will be saved in a new Image" class="left button medium radius success provision_snapshot_button tip-top">'+
+              '<i class="fa fa-fw fa-lg fa-save"/> '+
+            '</a>'+
+            '<a data-tooltip title="You have to power-off the virtual machine first" class="left button medium radius white provision_snapshot_button_disabled tip-top" style="color: #999">'+
+              '<i class="fa fa-fw fa-lg fa-save"/> '+
+            '</a>' : '') +
         '</li>'+
         '<li class="right">'+
           '<a href"#" data-tooltip title="Delete" class="button medium radius alert provision_delete_confirm_button tip-top right">'+
@@ -1658,9 +1879,12 @@ var provision_content = provision_dashboard +
   provision_user_info +
   provision_create_vm +
   '<div class="provision_vms_list_section hidden section_content">' +
-  '</div>' +
-  '<div class="provision_templates_list_section hidden section_content">' +
   '</div>';
+
+if (Config.isTabPanelEnabled("provision-tab", "templates")) {
+  provision_content += '<div class="provision_templates_list_section hidden section_content">';
+  provision_content += '</div>';
+}
 
 if (Config.isTabPanelEnabled("provision-tab", "users")) {
   provision_content += provision_manage_vdc;
@@ -1693,11 +1917,14 @@ if (Config.isTabPanelEnabled("provision-tab", "users")) {
 
 provision_header +=  '<li>'+
       '<a href"#" class="medium off-color provision_vms_list_button" id="" style=" margin-left: 10px;margin-right: 10px;"><i class="fa fa-fw fa-2x fa-th"/><br>'+tr("VMs")+'</a>'+
-    '</li>'+
+    '</li>'
+
+if (Config.isTabPanelEnabled("provision-tab", "templates")) {
+  provision_header +=
     '<li>'+
       '<a href"#" class="medium off-color provision_templates_list_button" style=" margin-left: 10px;margin-right: 10px;"><i class="fa fa-fw fa-2x fa-save"/><br>'+tr("Templates")+'</a>'+
     '</li>';
-
+}
 
 if (Config.isTabPanelEnabled("provision-tab", "flows")) {
   provision_header +=
@@ -1758,15 +1985,16 @@ var povision_actions = {
       type: "create",
       call: OpenNebula.User.create,
       callback: function(request, response) {
+        if ( $("div#provision_create_user_manual_quota",
+             $("#provision_create_user")).hasClass("active") ){
 
-        // TODO if no quota is defined redefine?
-        Sunstone.runAction("Provision.User.set_quota", [response.USER.ID], {
-          "VM" : {
-            "VOLATILE_SIZE":"-1",
-            "VMS": $(".provision_rvms_quota_input").val()||QUOTA_LIMIT_UNLIMITED,
-            "MEMORY": $(".provision_memory_quota_input").val()||QUOTA_LIMIT_UNLIMITED,
-            "CPU": $(".provision_cpu_quota_input").val()||QUOTA_LIMIT_UNLIMITED}
-          });
+          quota_json = retrieve_provision_quota_widget($("#provision_create_user"));
+
+          Sunstone.runAction("Provision.User.set_quota",
+                              [response.USER.ID], quota_json);
+        } else {
+          clear_provision_create_user();
+        }
       },
       error: onError
   },
@@ -1775,19 +2003,7 @@ var povision_actions = {
       type: "multiple",
       call: OpenNebula.User.set_quota,
       callback: function(request) {
-        OpenNebula.Helper.clear_cache("USER");
-        show_provision_user_list(0);
-
-        var context = $("#provision_create_user");
-        $("#username", context).val('');
-        $("#password", context).val('');
-        $(".provision_rvms_quota_input", context).val('');
-        $(".provision_memory_quota_input", context).val('');
-        $(".provision_memory_quota_tmp_input", context).val('');
-        $(".provision_cpu_quota_input", context).val('');
-        $("#repeat_password", context).val('');
-        $(".alert-box-error", context).hide();
-        $(".alert-box-error", context).html("");
+        clear_provision_create_user();
       },
       error: onError
   },
@@ -1896,13 +2112,15 @@ function generate_custom_attrs(context, custom_attrs) {
           '</div>'+
         '</div>');
     })
+  } else {
+    context.html("");
   }
 }
 
-function generate_cardinality_selector(context, role_template) {
+function generate_cardinality_selector(context, role_template, template_json) {
   context.off();
   var min_vms = (role_template.min_vms||1);
-  var max_vms = (role_template.max_vms||100);
+  var max_vms = (role_template.max_vms||20);
 
   context.html(
     '<br>'+
@@ -1922,32 +2140,59 @@ function generate_cardinality_selector(context, role_template) {
     '<div class="row">'+
       '<div class="large-12 columns">'+
         '<div class="row">'+
-          '<div class="large-5 text-center columns">'+
-            '<span class="cardinality_value" style="color: #777; font-size:60px">'+role_template.cardinality+'</span>'+
+          '<div class="large-2 text-center columns">'+
+            '<span class="cardinality_value" style="color: #777; font-size:40px">'+role_template.cardinality+'</span>'+
             '<br>'+
             '<span style="color: #999;">'+tr("VMs")+'</span>'+
           '</div>'+
-          '<div class="large-7 columns">'+
-          '<div class="cardinality_slider_div">'+
-            '<span class="" style="color: #777;">'+tr("Change cardinality")+'</span>'+
-            '<br>'+
-            '<div class="range-slider radius cardinality_slider" data-slider data-options="start: 1; end: 50;">'+
-              '<span class="range-slider-handle"></span>'+
-              '<span class="range-slider-active-segment"></span>'+
-              '<input type="hidden">'+
+          '<div class="large-6 columns">'+
+            '<div class="cardinality_slider_div">'+
+              '<span class="" style="color: #777;">'+tr("Change cardinality")+'</span>'+
+              '<br>'+
+              '<div class="range-slider radius cardinality_slider" data-slider data-options="start: 1; end: 50;">'+
+                '<span class="range-slider-handle"></span>'+
+                '<span class="range-slider-active-segment"></span>'+
+                '<input type="hidden">'+
+              '</div>'+
+              '<span class="left" style="color: #999;">'+min_vms+'</span>'+
+              '<span class="right" style="color: #999;">'+max_vms+'</span>'+
             '</div>'+
-            '<span class="left" style="color: #999;">'+min_vms+'</span>'+
-            '<span class="right" style="color: #999;">'+max_vms+'</span>'+
+            '<div class="cardinality_no_slider_div">'+
+              '<br>'+
+              '<br>'+
+              '<span class="" style="color: #999;">'+tr("The cardinality for this role cannot be changed")+'</span>'+
+            '</div>'+
           '</div>'+
-          '<div class="cardinality_no_slider_div">'+
+          '<div class="large-4 columns text-center provision_create_service_cost_div hidden">'+
+            '<span class="cost_value" style="color: #777; font-size:40px"></span>'+
             '<br>'+
-            '<br>'+
-            '<span class="" style="color: #999;">'+tr("The cardinality for this role cannot be changed")+'</span>'+
-          '</div>'+
+            '<span style="color: #999;">'+tr("COST")+' / ' + tr("HOUR") + '</span>'+
           '</div>'+
         '</div>'+
       '</div>'+
     '</div>');
+
+    var capacity = template_json.VMTEMPLATE.TEMPLATE;
+    var cost = 0;
+    if (capacity.CPU_COST || capacity.MEMORY_COST && Config.isFeatureEnabled("showback")) {
+      $(".provision_create_service_cost_div").show();
+
+      if (capacity.CPU && capacity.CPU_COST) {
+        cost += capacity.CPU * capacity.CPU_COST
+        $(".cost_value").data("CPU_COST", capacity.CPU_COST);
+      }
+
+      if (capacity.MEMORY && capacity.MEMORY_COST) {
+        cost += capacity.MEMORY * capacity.MEMORY_COST
+        $(".cost_value").data("MEMORY_COST", capacity.MEMORY_COST);
+      }
+
+      $(".provision_create_service_cost_div", context).data("cost", cost)
+      var cost_value = cost*parseInt(role_template.cardinality);
+      $(".cost_value").html(cost_value.toFixed(2));
+    } else {
+      $(".provision_create_service_cost_div").hide();
+    }
 
     if (max_vms > min_vms) {
       $( ".cardinality_slider", context).attr('data-options', 'start: '+min_vms+'; end: '+max_vms+';')
@@ -1959,9 +2204,9 @@ function generate_cardinality_selector(context, role_template) {
 
       $( ".cardinality_slider", context).on('change', function(){
         $(".cardinality_value",context).html($(this).attr('data-slider'))
+        var cost_value = $(".provision_create_service_cost_div", context).data("cost")*$(this).attr('data-slider');
+        $(".cost_value").html(cost_value.toFixed(2));
       });
-
-
     } else {
       $( ".cardinality_slider_div", context).hide();
       $( ".cardinality_no_slider_div", context).show();
@@ -1979,7 +2224,7 @@ function generate_provision_instance_type_accordion(context, capacity) {
     memory_value = Math.floor(capacity.MEMORY/1024);
     memory_unit = "GB";
   } else {
-    memory_value = capacity.MEMORY;
+    memory_value = (capacity.MEMORY ? capacity.MEMORY : '-');
     memory_unit = "MB";
   }
 
@@ -2000,21 +2245,27 @@ function generate_provision_instance_type_accordion(context, capacity) {
     '<div class="row">'+
       '<div class="large-12 large-centered columns">'+
         '<div class="row text-center">'+
-          '<div class="large-6 columns">'+
-            '<span class="cpu_value" style="color: #777; font-size:60px">'+capacity.CPU+'</span>'+
+          '<div class="large-4 columns">'+
+            '<span class="cpu_value" style="color: #777; font-size:60px">'+(capacity.CPU ? capacity.CPU : '-')+'</span>'+
             '<br>'+
             '<span style="color: #999;">'+tr("CPU")+'</span>'+
           '</div>'+
-          '<div class="large-6 columns">'+
+          '<div class="large-4 columns">'+
             '<span class="memory_value" style="color: #777; font-size:60px">'+memory_value+'</span>'+
             ' '+
             '<span class="memory_unit" style="color: #777; font-size:30px">'+memory_unit+'</span>'+
             '<br>'+
             '<span style="color: #999;">'+tr("MEMORY")+'</span>'+
           '</div>'+
+          '<div class="large-4 columns provision_create_template_cost_div hidden">'+
+            '<span class="cost_value" style="color: #777; font-size:60px"></span>'+
+            '<br>'+
+            '<span style="color: #999;">'+tr("COST")+' / ' + tr("HOUR") + '</span>'+
+          '</div>'+
         '</div>'+
       '</div>'+
     '</div>'+
+    (Config.provision.create_vm.isEnabled("capacity_select") && (capacity.SUNSTONE_CAPACITY_SELECT != "NO") ?
     '<br>'+
     '<br>'+
     '<div class="row">'+
@@ -2051,107 +2302,142 @@ function generate_provision_instance_type_accordion(context, capacity) {
           '</dd>'+
         '</dl>'+
       '</div>'+
-    '</div>'+
+    '</div>' : '' ) +
     '<br>');
 
-  provision_instance_type_accordion_id += 1;
+  var cost = 0;
+  if (capacity.CPU_COST || capacity.MEMORY_COST && Config.isFeatureEnabled("showback")) {
+    $(".provision_create_template_cost_div").show();
 
-  var provision_instance_types_datatable = $('.provision_instance_types_table', context).dataTable({
-    "iDisplayLength": 6,
-    "sDom" : '<"H">t<"F"lp>',
-    "bSort" : false,
-    "aLengthMenu": [[6, 12, 36, 72], [6, 12, 36, 72]],
-    "aoColumnDefs": [
-        { "bVisible": false, "aTargets": ["all"]}
-    ],
-    "aoColumns": [
-        { "mDataProp": "name" }
-    ],
-    "fnPreDrawCallback": function (oSettings) {
-      // create a thumbs container if it doesn't exist. put it in the dataTables_scrollbody div
-      if (this.$('tr', {"filter": "applied"} ).length == 0) {
-        this.html('<div class="text-center">'+
-          '<span class="fa-stack fa-5x" style="color: #dfdfdf">'+
-            '<i class="fa fa-cloud fa-stack-2x"></i>'+
-            '<i class="fa fa-info-circle fa-stack-1x fa-inverse"></i>'+
-          '</span>'+
-          '<br>'+
-          '<br>'+
-          '<span style="font-size: 18px; color: #999">'+
-            tr("There are no instance_types available. Please contact your cloud administrator")+
-          '</span>'+
-          '</div>');
+    if (capacity.CPU && capacity.CPU_COST) {
+      cost += capacity.CPU * capacity.CPU_COST
+      $(".cost_value").data("CPU_COST", capacity.CPU_COST);
+    }
+
+    if (capacity.MEMORY && capacity.MEMORY_COST) {
+      cost += capacity.MEMORY * capacity.MEMORY_COST
+      $(".cost_value").data("MEMORY_COST", capacity.MEMORY_COST);
+    }
+
+    $(".cost_value").html(cost.toFixed(2));
+  } else {
+    $(".provision_create_template_cost_div").hide();
+  }
+
+  if (Config.provision.create_vm.isEnabled("capacity_select") && (capacity.SUNSTONE_CAPACITY_SELECT != "NO")) {
+    provision_instance_type_accordion_id += 1;
+
+    var provision_instance_types_datatable = $('.provision_instance_types_table', context).dataTable({
+      "iDisplayLength": 6,
+      "sDom" : '<"H">t<"F"lp>',
+      "bSort" : false,
+      "aLengthMenu": [[6, 12, 36, 72], [6, 12, 36, 72]],
+      "aoColumnDefs": [
+          { "bVisible": false, "aTargets": ["all"]}
+      ],
+      "aoColumns": [
+          { "mDataProp": "name" }
+      ],
+      "fnPreDrawCallback": function (oSettings) {
+        // create a thumbs container if it doesn't exist. put it in the dataTables_scrollbody div
+        if (this.$('tr', {"filter": "applied"} ).length == 0) {
+          this.html('<div class="text-center">'+
+            '<span class="fa-stack fa-5x" style="color: #dfdfdf">'+
+              '<i class="fa fa-cloud fa-stack-2x"></i>'+
+              '<i class="fa fa-info-circle fa-stack-1x fa-inverse"></i>'+
+            '</span>'+
+            '<br>'+
+            '<br>'+
+            '<span style="font-size: 18px; color: #999">'+
+              tr("There are no instance_types available. Please contact your cloud administrator")+
+            '</span>'+
+            '</div>');
+        } else {
+          $(".provision_instance_types_table", context).html(
+            '<ul class="provision_instance_types_ul large-block-grid-3 medium-block-grid-3 small-block-grid-1 text-center">'+
+            '</ul>');
+        }
+
+        return true;
+      },
+      "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
+        var data = aData;
+
+        var li = $('<li>'+
+            '<ul class="provision-pricing-table hoverable only-one" cpu="'+data.cpu+'" memory="'+data.memory+'">'+
+              '<li class="provision-title" title="'+data.name+'">'+
+                data.name+
+              '</li>'+
+              '<li class="provision-bullet-item">'+
+                '<span style="font-size: 40px">'+
+                '<i class="fa fa-fw fa-laptop"/>&emsp;'+
+                '<span style="vertical-align: middle; font-size:14px">'+
+                  'x'+data.cpu+' - '+
+                  ((data.memory > 1000) ?
+                    (Math.floor(data.memory/1024)+'GB') :
+                    (data.memory+'MB'))+
+                '</span>'+
+                '</span>'+
+              '</li>'+
+              '<li class="provision-description">'+
+                (data.description || '')+
+              '</li>'+
+            '</ul>'+
+          '</li>').appendTo($(".provision_instance_types_ul", context));
+
+        $(".provision-pricing-table", li).data("opennebula", data)
+
+        return nRow;
+      }
+    });
+
+
+    $('.provision-search-input', context).on('keyup',function(){
+      provision_instance_types_datatable.fnFilter( $(this).val() );
+    })
+
+    $('.provision-search-input', context).on('change',function(){
+      provision_instance_types_datatable.fnFilter( $(this).val() );
+    })
+
+    context.on("click", ".provision-pricing-table.only-one" , function(){
+      $(".cpu_value", context).html($(this).attr("cpu"));
+
+      var memory_value;
+      var memory_unit;
+
+      if ($(this).attr("memory") > 1000){
+        memory_value = Math.floor($(this).attr("memory")/1024);
+        memory_unit = "GB";
       } else {
-        $(".provision_instance_types_table", context).html(
-          '<ul class="provision_instance_types_ul large-block-grid-3 medium-block-grid-3 small-block-grid-1 text-center">'+
-          '</ul>');
+        memory_value = $(this).attr("memory");
+        memory_unit = "MB";
       }
 
-      return true;
-    },
-    "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
-      var data = aData;
+      $(".memory_value", context).html(memory_value);
+      $(".memory_unit", context).html(memory_unit);
 
-      var li = $('<li>'+
-          '<ul class="provision-pricing-table hoverable only-one" cpu="'+data.cpu+'" memory="'+data.memory+'">'+
-            '<li class="provision-title" title="'+data.name+'">'+
-              data.name+
-            '</li>'+
-            '<li class="provision-bullet-item">'+
-              '<span style="font-size: 40px">'+
-              '<i class="fa fa-fw fa-laptop"/>&emsp;'+
-              '<span style="vertical-align: middle; font-size:14px">'+
-                'x'+data.cpu+' - '+
-                ((data.memory > 1000) ?
-                  (Math.floor(data.memory/1024)+'GB') :
-                  (data.memory+'MB'))+
-              '</span>'+
-              '</span>'+
-            '</li>'+
-            '<li class="provision-description">'+
-              (data.description || '')+
-            '</li>'+
-          '</ul>'+
-        '</li>').appendTo($(".provision_instance_types_ul", context));
+      if (Config.isFeatureEnabled("showback")) {
+        var cost = 0;
 
-      $(".provision-pricing-table", li).data("opennebula", data)
+        if ($(".cost_value").data("CPU_COST")) {
+          cost += $(this).attr("cpu") * $(".cost_value").data("CPU_COST")
+        }
 
-      return nRow;
-    }
-  });
+        if ($(".cost_value").data("MEMORY_COST")) {
+          cost += $(this).attr("memory") * $(".cost_value").data("MEMORY_COST")
+        }
 
+        $(".cost_value").html(cost.toFixed(2));
+      }
 
-  $('.provision-search-input', context).on('keyup',function(){
-    provision_instance_types_datatable.fnFilter( $(this).val() );
-  })
+      $('.accordion a', context).first().trigger("click");
+    })
 
-  $('.provision-search-input', context).on('change',function(){
-    provision_instance_types_datatable.fnFilter( $(this).val() );
-  })
+    $(document).foundation();
 
-  context.on("click", ".provision-pricing-table.only-one" , function(){
-    $(".cpu_value", context).html($(this).attr("cpu"));
-
-    var memory_value;
-    var memory_unit;
-
-    if ($(this).attr("memory") > 1000){
-      memory_value = Math.floor($(this).attr("memory")/1024);
-      memory_unit = "GB";
-    } else {
-      memory_value = $(this).attr("memory");
-      memory_unit = "MB";
-    }
-
-    $(".memory_value", context).html(memory_value);
-    $(".memory_unit", context).html(memory_unit);
-
-    $('.accordion a', context).first().trigger("click");
-  })
-
-  $(document).foundation();
-
-  update_provision_instance_types_datatable(provision_instance_types_datatable);
+    update_provision_instance_types_datatable(provision_instance_types_datatable);
+  }
 }
 
 var provision_nic_accordion_id = 0;
@@ -2374,6 +2660,8 @@ function show_provision_dashboard() {
       success: function(request,user_json){
         var user = user_json.USER;
 
+        initEmptyQuotas(user);
+
         if (!$.isEmptyObject(user.VM_QUOTA)){
             var default_user_quotas = Quotas.default_quotas(user.DEFAULT_USER_QUOTAS);
 
@@ -2421,6 +2709,8 @@ function show_provision_dashboard() {
       },
       success: function(request,group_json){
         var group = group_json.GROUP;
+
+        initEmptyQuotas(group);
 
         if (!$.isEmptyObject(group.VM_QUOTA)){
             var default_group_quotas = Quotas.default_quotas(group.DEFAULT_GROUP_QUOTAS);
@@ -2690,6 +2980,13 @@ function show_provision_user_info_callback(request, response) {
     $("#provision_user_info_acct_div"),
       { fixed_user: info.ID,
         fixed_group_by: "vm" });
+
+
+  if (Config.isFeatureEnabled("showback")) {
+    showbackGraphs(
+      $("#provision_user_info_showback_div"),
+        { fixed_user: info.ID});
+  }
 }
 
 
@@ -2715,6 +3012,12 @@ function show_provision_group_info_callback(request, response) {
     {   fixed_group: info.ID,
         init_group_by: "user" });
 
+  if (Config.isFeatureEnabled("showback")) {
+    showbackGraphs(
+      $("#provision_info_vdc_group_showback", context),
+      {   fixed_group: info.ID });
+  }
+
   $("#acct_placeholder", context).hide();
 }
 
@@ -2727,9 +3030,11 @@ function show_provision_create_vm() {
   provision_vdc_templates_datatable.fnFilter("^(?!\-$)", 2, true, false);
   provision_vdc_templates_datatable.fnFilter("^1$", 3, true, false);
 
-  update_provision_templates_datatable(provision_saved_templates_datatable);
-  provision_saved_templates_datatable.fnFilter("^(?!\-$)", 2, true, false);
-  provision_saved_templates_datatable.fnFilter("^0$", 3, true, false);
+  if (Config.isTabPanelEnabled("provision-tab", "templates")) {
+    update_provision_templates_datatable(provision_saved_templates_datatable);
+    provision_saved_templates_datatable.fnFilter("^(?!\-$)", 2, true, false);
+    provision_saved_templates_datatable.fnFilter("^0$", 3, true, false);
+  }
 
   $(".provision_accordion_template .selected_template").hide();
   $(".provision_accordion_template .select_template").show();
@@ -3403,7 +3708,14 @@ function setup_info_vm(context) {
             break;
         }
 
+        if (!enableVnc(data) && !enableSPICE(data)) {
+            $(".provision_vnc_button", context).hide();
+            $(".provision_vnc_button_disabled", context).hide();
+        }
+
         $(".provision_info_vm", context).attr("vm_id", data.ID);
+        $(".provision_info_vm", context).data("vm", data);
+
         $(".provision_info_vm_name", context).text(data.NAME);
 
         $(".provision-pricing-table_vm_info", context).html(
@@ -3534,33 +3846,69 @@ function setup_info_vm(context) {
     })
   }
 
-  context.on("click", ".provision_snapshot_button", function(){
-    $(".provision_confirm_action:first", context).html(
-      '<div data-alert class="alert-box secondary radius">'+
-        '<div class="row">'+
-          '<div class="large-12 columns">'+
-            '<span style="font-size: 14px; line-height: 20px">'+
-              tr("This Virtual Machine will be saved in a new Template. Only the main disk will be preserved!")+
-            '<br>'+
-              tr("You can then create a new Virtual Machine using this Template")+
-            '</span>'+
+  if (Config.isTabPanelEnabled("provision-tab", "templates")) {
+    context.on("click", ".provision_snapshot_button", function(){
+      $(".provision_confirm_action:first", context).html(
+        '<div data-alert class="alert-box secondary radius">'+
+          '<div class="row">'+
+            '<div class="large-12 columns">'+
+              '<span style="font-size: 14px; line-height: 20px">'+
+                tr("This Virtual Machine will be saved in a new Template. Only the main disk will be preserved!")+
+              '<br>'+
+                tr("You can then create a new Virtual Machine using this Template")+
+              '</span>'+
+            '</div>'+
           '</div>'+
-        '</div>'+
-        '<br>'+
-        '<div class="row">'+
-          '<div class="large-11 large-centered columns">'+
-            '<input type="text" class="provision_snapshot_name" placeholder="'+tr("Template Name")+'" style="height: 40px !important; font-size: 16px; padding: 0.5rem  !important; margin: 0px"/>'+
+          '<br>'+
+          '<div class="row">'+
+            '<div class="large-11 large-centered columns">'+
+              '<input type="text" class="provision_snapshot_name" placeholder="'+tr("Template Name")+'" style="height: 40px !important; font-size: 16px; padding: 0.5rem  !important; margin: 0px"/>'+
+            '</div>'+
           '</div>'+
-        '</div>'+
-        '<br>'+
-        '<div class="row">'+
-          '<div class="large-11 large-centered columns">'+
-            '<a href"#" class="provision_snapshot_create_button success button large-12 radius right">'+tr("Save Virtual Machine to Template")+'</a>'+
+          '<br>'+
+          '<div class="row">'+
+            '<div class="large-11 large-centered columns">'+
+              '<a href"#" class="provision_snapshot_create_button success button large-12 radius right">'+tr("Save Virtual Machine to Template")+'</a>'+
+            '</div>'+
           '</div>'+
-        '</div>'+
-        '<a href="#" class="close" style="top: 20px">&times;</a>'+
-      '</div>');
-  });
+          '<a href="#" class="close" style="top: 20px">&times;</a>'+
+        '</div>');
+    });
+
+    context.on("click", ".provision_snapshot_create_button", function(){
+      var button = $(this);
+      button.attr("disabled", "disabled");
+      var context = $(".provision_info_vm[vm_id]");
+
+      var vm_id = context.attr("vm_id");
+      var image_name = $('.provision_snapshot_name', context).val();
+
+      OpenNebula.VM.saveas({
+        data : {
+          id: vm_id,
+          extra_param: {
+            disk_id : "0",
+            image_name : image_name,
+            type: "",
+            clonetemplate: true,
+            hot: true
+          }
+        },
+        success: function(request, response){
+          OpenNebula.Helper.clear_cache("VMTEMPLATE");
+          notifyMessage(tr("Image") + ' ' + request.request.data[0][1].image_name + ' ' + tr("saved successfully"))
+          update_provision_vm_info(vm_id, context);
+          button.removeAttr("disabled");
+        },
+        error: function(request, response){
+          onError(request, response);
+          button.removeAttr("disabled");
+        }
+      })
+
+      return false;
+    });
+  }
 
   context.on("click", ".provision_delete_confirm_button", function(){
     $(".provision_confirm_action:first", context).html(
@@ -3660,40 +4008,6 @@ function setup_info_vm(context) {
         '</div>'+
         '<a href="#" class="close" style="top: 20px">&times;</a>'+
       '</div>');
-  });
-
-  context.on("click", ".provision_snapshot_create_button", function(){
-    var button = $(this);
-    button.attr("disabled", "disabled");
-    var context = $(".provision_info_vm[vm_id]");
-
-    var vm_id = context.attr("vm_id");
-    var image_name = $('.provision_snapshot_name', context).val();
-
-    OpenNebula.VM.saveas({
-      data : {
-        id: vm_id,
-        extra_param: {
-          disk_id : "0",
-          image_name : image_name,
-          type: "",
-          clonetemplate: true,
-          hot: true
-        }
-      },
-      success: function(request, response){
-        OpenNebula.Helper.clear_cache("VMTEMPLATE");
-        notifyMessage(tr("Image") + ' ' + request.request.data[0][1].image_name + ' ' + tr("saved successfully"))
-        update_provision_vm_info(vm_id, context);
-        button.removeAttr("disabled");
-      },
-      error: function(request, response){
-        onError(request, response);
-        button.removeAttr("disabled");
-      }
-    })
-
-    return false;
   });
 
   context.on("click", ".provision_delete_button", function(){
@@ -3815,29 +4129,59 @@ function setup_info_vm(context) {
     var button = $(this);
     button.attr("disabled", "disabled");
     var vm_id = $(".provision_info_vm", context).attr("vm_id");
+    var vm_data = $(".provision_info_vm", context).data("vm");
 
     OpenNebula.VM.startvnc({
       data : {
         id: vm_id
       },
       success: function(request, response){
-        var proxy_host = window.location.hostname;
-        var proxy_port = config['system_config']['vnc_proxy_port'];
-        var pw = response["password"];
-        var token = response["token"];
-        var vm_name = response["vm_name"];
-        var path = '?token='+token;
+        if (enableVnc(vm_data)) {
+          var proxy_host = window.location.hostname;
+          var proxy_port = config['system_config']['vnc_proxy_port'];
+          var pw = response["password"];
+          var token = response["token"];
+          var vm_name = response["vm_name"];
+          var path = '?token='+token;
 
-        var url = "vnc?";
-        url += "host=" + proxy_host;
-        url += "&port=" + proxy_port;
-        url += "&token=" + token;
-        url += "&password=" + pw;
-        url += "&encrypt=" + config['user_config']['vnc_wss'];
-        url += "&title=" + vm_name;
+          var url = "vnc?";
+          url += "host=" + proxy_host;
+          url += "&port=" + proxy_port;
+          url += "&token=" + token;
+          url += "&password=" + pw;
+          url += "&encrypt=" + config['user_config']['vnc_wss'];
+          url += "&title=" + vm_name;
 
-        window.open(url, '', '_blank');
-        button.removeAttr("disabled");
+          window.open(url, '', '_blank');
+          button.removeAttr("disabled");
+        } else if (enableSPICE(vm_data)) {
+          var host, port, password, scheme = "ws://", uri, token, vm_name;
+
+          if (config['user_config']['vnc_wss'] == "yes") {
+              scheme = "wss://";
+          }
+
+          host = window.location.hostname;
+          port = config['system_config']['vnc_proxy_port'];
+          password = response["password"];
+          token = response["token"];
+          vm_name = response["vm_name"];
+
+          uri = scheme + host + ":" + port + "?token=" + token;
+
+          var url = "spice?";
+          url += "host=" + host;
+          url += "&port=" + port;
+          url += "&token=" + token;
+          url += "&password=" + password;
+          url += "&encrypt=" + config['user_config']['vnc_wss'];
+          url += "&title=" + vm_name;
+
+          window.open(url, '', '_blank');
+          button.removeAttr("disabled");
+        } else {
+          notifyError("The remote console is not enabled for this VM")
+        }
       },
       error: function(request, response){
         onError(request, response);
@@ -3966,14 +4310,11 @@ function setup_provision_vms_list(context, opts) {
   });
 
   $(".provision_list_vms_filter", context).on("change", ".resource_list_select", function(){
-    var filter;
-    if ($(this).val() == "-2"){
-      filter = "";
+    if ($(this).val() != "-2"){
+      provision_vms_datatable.fnFilter("^" + $(this).val() + "$", 2, true, false);
     } else {
-      filter = $(this).val();
+      provision_vms_datatable.fnFilter("", 2);
     }
-
-    provision_vms_datatable.fnFilter( filter, 2 );
   })
 
   insertSelectOptions(
@@ -4123,14 +4464,11 @@ function setup_provision_templates_list(context, opts) {
   });
 
   $(".provision_list_templates_filter", context).on("change", ".resource_list_select", function(){
-    var filter;
-    if ($(this).val() == "-2"){
-      filter = "";
+    if ($(this).val() != "-2"){
+      provision_templates_datatable.fnFilter("^" + $(this).val() + "$", 3, true, false);
     } else {
-      filter = $(this).val();
+      provision_templates_datatable.fnFilter("", 3);
     }
-
-    provision_templates_datatable.fnFilter( filter, 3 );
   })
 
   insertSelectOptions(
@@ -4842,14 +5180,11 @@ function setup_provision_flows_list(context, opts){
   });
 
   $(".provision_list_flows_filter", context).on("change", ".resource_list_select", function(){
-    var filter;
-    if ($(this).val() == "-2"){
-      filter = "";
+    if ($(this).val() != "-2"){
+      provision_flows_datatable.fnFilter("^" + $(this).val() + "$", 2, true, false);
     } else {
-      filter = $(this).val();
+      provision_flows_datatable.fnFilter("", 2);
     }
-
-    provision_flows_datatable.fnFilter( filter, 2 );
   })
 
   insertSelectOptions(
@@ -4906,6 +5241,9 @@ function setup_provision_user_info(context) {
         $(".provision_info_vdc_user_name", context).text(data.NAME);
 
         $(".provision-pricing-table_user_info", context).html("");
+
+        initEmptyQuotas(data);
+
         if (!$.isEmptyObject(data.VM_QUOTA)){
             var default_user_quotas = Quotas.default_quotas(data.DEFAULT_USER_QUOTAS);
             quotas = quotaBarFloat(
@@ -5010,6 +5348,9 @@ function setup_provision_user_info(context) {
               '<span class="provision_vdc_user_info_show_acct button medium radius" data-tooltip title="'+tr("User Accounting")+'" style="margin-right: 10px">'+
                 '<i class="fa fa-bar-chart-o fa-lg"></i>'+
               '</span>'+
+              (Config.isFeatureEnabled("showback") ? '<span class="provision_vdc_user_info_show_showback button medium radius" data-tooltip title="'+tr("User Showback")+'" style="margin-right: 10px">'+
+                '<i class="fa fa-money fa-lg"></i>'+
+              '</span>' : '') +
             '</li>'+
             '<li class="provision-bullet-item text-left">'+
             '</li>')
@@ -5146,6 +5487,21 @@ function setup_provision_user_info(context) {
       '</h2>')
   })
 
+  if (Config.isFeatureEnabled("showback")) { 
+    context.on("click", ".provision_vdc_user_info_show_showback", function(){
+      $(".provision_vdc_info_container", context).html("");
+
+      showbackGraphs(
+        $(".provision_vdc_info_container", context),
+          { fixed_user: $(".provision_info_vdc_user", context).attr("opennebula_id")});
+
+      $(".provision_vdc_info_container", context).prepend(
+        '<h2 class="subheader">'+
+          $(".provision_info_vdc_user", context).attr("uname") + ' ' + tr("Showback")+
+        '</h2>')
+    })
+  };
+
   context.on("click", ".provision_vdc_user_delete_confirm_button", function(){
     $(".provision_vdc_user_confirm_action", context).html(
       '<div data-alert class="alert-box secondary radius">'+
@@ -5228,87 +5584,7 @@ function setup_provision_user_info(context) {
   context.on("click", ".provision_vdc_user_quota_confirm_button", function(){
     $(".provision_vdc_user_confirm_action", context).html(
       '<div data-alert class="alert-box secondary radius">'+
-        '<div class="row">'+
-          '<div class="large-10 large-centered columns">'+
-            '<h5 class="subheader text-right">'+
-              '<span class="left">'+
-                tr("Running VMs")+
-              '</span>'+
-            '</h5>'+
-            '<br>'+
-          '</div>'+
-        '</div>'+
-        '<div class="row">'+
-          '<div class="large-10 large-centered columns">'+
-            '<div class="row collapse">'+
-              '<div class="large-9 small-9 columns">'+
-                '<div class="range-slider radius provision_rvms_quota_vdc_info_slider" data-slider data-options="start: 1; end: 50;">'+
-                  '<span class="range-slider-handle"></span>'+
-                  '<span class="range-slider-active-segment"></span>'+
-                  '<input type="hidden">'+
-                '</div>'+
-              '</div>'+
-              '<div class="large-2 small-2 columns">'+
-                '<input type="text"  class="provision_rvms_quota_vdc_info_input provision-input" style="height: 40px !important; font-size: 16px; padding: 0.5rem  !important;"/>'+
-              '</div>'+
-            '</div>'+
-          '</div>'+
-        '</div>'+
-        '<div class="row">'+
-          '<div class="large-10 large-centered columns">'+
-            '<h5 class="subheader text-right">'+
-              '<span class="left">'+
-                tr("CPU")+
-              '</span>'+
-            '</h5>'+
-            '<br>'+
-          '</div>'+
-        '</div>'+
-        '<div class="row">'+
-          '<div class="large-10 large-centered columns">'+
-            '<div class="row collapse">'+
-              '<div class="large-9 small-9 columns">'+
-                '<div class="range-slider radius provision_cpu_quota_vdc_info_slider" data-slider data-options="start: 1; end: 50;">'+
-                  '<span class="range-slider-handle"></span>'+
-                  '<span class="range-slider-active-segment"></span>'+
-                  '<input type="hidden">'+
-                '</div>'+
-              '</div>'+
-              '<div class="large-2 small-2 columns">'+
-                '<input type="text"  class="provision_cpu_quota_vdc_info_input provision-input" style="height: 40px !important; font-size: 16px; padding: 0.5rem  !important;"/>'+
-              '</div>'+
-            '</div>'+
-          '</div>'+
-        '</div>'+
-        '<div class="row">'+
-          '<div class="large-10 large-centered columns">'+
-            '<h5 class="subheader text-right">'+
-              '<span class="left">'+
-                tr("Memory (GBs)")+
-              '</span>'+
-            '</h5>'+
-            '<br>'+
-          '</div>'+
-        '</div>'+
-        '<div class="vm_param">'+
-            '<input type="hidden" class="provision_memory_quota_vdc_info_input"/>'+
-        '</div>'+
-        '<div class="row">'+
-          '<div class="large-10 large-centered columns">'+
-            '<div class="row collapse">'+
-              '<div class="large-9 small-9 columns">'+
-                '<div class="range-slider radius provision_memory_quota_vdc_info_slider" data-slider data-options="start: 1; end: 50;">'+
-                  '<span class="range-slider-handle"></span>'+
-                  '<span class="range-slider-active-segment"></span>'+
-                  '<input type="hidden">'+
-                '</div>'+
-              '</div>'+
-              '<div class="large-2 small-2 columns">'+
-                '<input type="text" class="provision_memory_quota_vdc_info_tmp_input provision-input" style="height: 40px !important; font-size: 16px; padding: 0.5rem  !important;"/>'+
-              '</div>'+
-            '</div>'+
-          '</div>'+
-        '</div>'+
+        provision_quota_widget+
         '<br>'+
         '<br>'+
         '<div class="row">'+
@@ -5319,60 +5595,62 @@ function setup_provision_user_info(context) {
         '<a href="#" class="close" style="top: 20px">&times;</a>'+
       '</div>');
 
-      var provision_rvms_quota_vdc_info_input = $(".provision_rvms_quota_vdc_info_input", context);
-
-      $( ".provision_rvms_quota_vdc_info_slider", context).on('change', function(){
-        provision_rvms_quota_vdc_info_input.val($(this).attr('data-slider'))
-      });
-
-      provision_rvms_quota_vdc_info_input.change(function() {
-        $( ".provision_rvms_quota_vdc_info_slider", context).foundation('slider', 'set_value', this.value);
-      });
-
-      var provision_cpu_quota_vdc_info_input = $(".provision_cpu_quota_vdc_info_input", context);
-
-      $( ".provision_cpu_quota_vdc_info_slider", context).on('change', function(){
-        provision_cpu_quota_vdc_info_input.val($(this).attr('data-slider'))
-      });
-
-      provision_cpu_quota_vdc_info_input.change(function() {
-          $( ".provision_cpu_quota_vdc_info_slider", context).foundation('slider', 'set_value', this.value);
-      });
-
-      var provision_memory_quota_vdc_info_input = $(".provision_memory_quota_vdc_info_input", context);
-      var provision_memory_quota_vdc_info_tmp_input = $(".provision_memory_quota_vdc_info_tmp_input", context);
-
-      var update_final_memory_input = function() {
-        var value = provision_memory_quota_vdc_info_tmp_input.val();
-        if (value > 0) {
-         provision_memory_quota_vdc_info_input.val( Math.floor(value * 1024) );
-        } else {
-         provision_memory_quota_vdc_info_input.val(value);
-        }
-      }
-
-      $( ".provision_memory_quota_vdc_info_slider", context).on('change', function(){
-        provision_memory_quota_vdc_info_tmp_input.val($(this).attr('data-slider'));
-        update_final_memory_input();
-      });
-
-      provision_memory_quota_vdc_info_tmp_input.on("change", function() {
-          update_final_memory_input();
-          $( ".provision_memory_quota_vdc_info_slider", context).foundation('slider', 'set_value', this.value);
-      });
+      setup_provision_quota_widget(context);
 
       $(document).foundation();
 
       var quotas_str = $(".provision_info_vdc_user", context).attr("quotas");
       if (quotas_str) {
         var quotas = JSON.parse(quotas_str);
-        var rvms_quotas = (quotas.VM.VMS == QUOTA_LIMIT_UNLIMITED ? "" : quotas.VM.VMS)
-        var cpu_quotas = (quotas.VM.CPU == QUOTA_LIMIT_UNLIMITED ? "" : quotas.VM.CPU)
-        var memory_quotas = (quotas.VM.MEMORY == QUOTA_LIMIT_UNLIMITED ? "" : Math.floor(quotas.VM.MEMORY/1024))
 
-        provision_rvms_quota_vdc_info_input.val(rvms_quotas).change();
-        provision_cpu_quota_vdc_info_input.val(cpu_quotas).change();
-        provision_memory_quota_vdc_info_tmp_input.val(memory_quotas).change();
+        var vms_limit = QUOTA_LIMIT_DEFAULT;
+        var cpu_limit = QUOTA_LIMIT_DEFAULT;
+        var mem_limit = QUOTA_LIMIT_DEFAULT;
+
+        if ( quotas.VM != undefined ){
+          vms_limit = quotas.VM.VMS;
+          cpu_limit = quotas.VM.CPU;
+          mem_limit = quotas.VM.MEMORY;
+
+          if(mem_limit != QUOTA_LIMIT_UNLIMITED &&
+             mem_limit != QUOTA_LIMIT_DEFAULT){
+
+            mem_limit = quotas.VM.MEMORY/1024;
+          }
+        }
+
+        var fill_limits = function(limit, select, input){
+          switch(limit){
+            case QUOTA_LIMIT_DEFAULT:
+              select.val('default').change();
+              input.val('').change();
+              break;
+
+            case QUOTA_LIMIT_UNLIMITED:
+              select.val('unlimited').change();
+              input.val('').change();
+              break;
+
+            default:
+              select.val('edit').change();
+              input.val(limit).change();
+          }
+        }
+
+        fill_limits(
+          vms_limit,
+          $("div.provision_rvms_quota select.provision_quota_select", context),
+          $(".provision_rvms_quota_input", context) );
+
+        fill_limits(
+          cpu_limit,
+          $("div.provision_cpu_quota select.provision_quota_select", context),
+          $(".provision_cpu_quota_input", context) );
+
+        fill_limits(
+          mem_limit,
+          $("div.provision_memory_quota select.provision_quota_select", context),
+          $(".provision_memory_quota_tmp_input", context) );
       }
   });
 
@@ -5401,16 +5679,12 @@ function setup_provision_user_info(context) {
     button.attr("disabled", "disabled");
     var user_id = $(".provision_info_vdc_user", context).attr("opennebula_id");
 
+    quota_json = retrieve_provision_quota_widget(context);
+
     OpenNebula.User.set_quota({
       data : {
         id: user_id,
-        extra_param: {
-          "VM" : {
-            "VOLATILE_SIZE":"-1",
-            "VMS": $(".provision_rvms_quota_vdc_info_input", context).val()||QUOTA_LIMIT_UNLIMITED,
-            "MEMORY": $(".provision_memory_quota_vdc_info_input", context).val()||QUOTA_LIMIT_UNLIMITED,
-            "CPU": $(".provision_cpu_quota_vdc_info_input", context).val()||QUOTA_LIMIT_UNLIMITED}
-        }
+        extra_param: quota_json
       },
       success: function(request, response){
         update_provision_vdc_user_info(user_id, context);
@@ -5479,6 +5753,21 @@ function setup_provision_users_list(context){
 
       if (q != undefined){
           var quota = q.QUOTAS;
+
+          if ($.isEmptyObject(quota.VM_QUOTA)){
+            var limit = (data.ID != 0 ? QUOTA_LIMIT_DEFAULT : QUOTA_LIMIT_UNLIMITED);
+
+            quota.VM_QUOTA = {
+              VM: {
+                VMS         : limit,
+                VMS_USED    : 0,
+                CPU         : limit,
+                CPU_USED    : 0,
+                MEMORY      : limit,
+                MEMORY_USED : 0
+              }
+            }
+          }
 
           if (!$.isEmptyObject(quota.VM_QUOTA)){
               quotas = quotaBarFloat(
@@ -5608,6 +5897,22 @@ function generate_provision_users_list(context, opts) {
   setup_provision_user_info(context);
 }
 
+// Closes and resets the create user wizard
+function clear_provision_create_user(){
+  OpenNebula.Helper.clear_cache("USER");
+  show_provision_user_list(0);
+
+  var context = $("#provision_create_user");
+  $("#username", context).val('');
+  $("#password", context).val('');
+  $("#repeat_password", context).val('');
+
+  reset_provision_quota_widget(context);
+
+  $(".alert-box-error", context).hide();
+  $(".alert-box-error", context).html("");
+}
+
 $(document).ready(function(){
   var tab_name = 'provision-tab';
   var tab = $("#"+tab_name);
@@ -5646,7 +5951,11 @@ $(document).ready(function(){
     })
 
     generate_provision_vms_list($(".provision_vms_list_section"), {active: true});
-    generate_provision_templates_list($(".provision_templates_list_section"), {active: true});
+
+    if (Config.isTabPanelEnabled("provision-tab", "templates")) {
+      generate_provision_templates_list($(".provision_templates_list_section"), {active: true});
+    }
+
     // TODO check if active
     generate_provision_flows_list($(".provision_flows_list_section"), {active: true});
     generate_provision_users_list($(".provision_users_list_section"), {active: true});
@@ -5989,15 +6298,19 @@ $(document).ready(function(){
           $(".provision_capacity_selector", create_vm_context),
           template_json.VMTEMPLATE.TEMPLATE);
 
-        generate_provision_network_accordion(
-          $(".provision_network_selector", create_vm_context));
+        if (Config.provision.create_vm.isEnabled("network_select") && (template_json.VMTEMPLATE.TEMPLATE.SUNSTONE_NETWORK_SELECT != "NO")) {
+          generate_provision_network_accordion(
+            $(".provision_network_selector", create_vm_context));
 
-        $.each(nics, function(index, nic){
-            generate_provision_network_table(
-              $(".provision_nic_accordion", create_vm_context),
-              nic);
-        })
-
+          $.each(nics, function(index, nic){
+              generate_provision_network_table(
+                $(".provision_nic_accordion", create_vm_context),
+                nic);
+          })
+        } else {
+          $(".provision_network_selector", create_vm_context).html("");
+        }
+        
         if (template_json.VMTEMPLATE.TEMPLATE.USER_INPUTS) {
           generate_custom_attrs(
             $(".provision_custom_attributes_selector", create_vm_context),
@@ -6022,16 +6335,21 @@ $(document).ready(function(){
       var template_id = $(".tabs-content .content.active .selected", context).attr("opennebula_id");
 
       var nics = [];
+      var nic;
       $(".selected_network", context).each(function(){
-        var nic;
         if ($(this).attr("template_nic")) {
           nic = JSON.parse($(this).attr("template_nic"))
-        } else {
+        } else if ($(this).attr("opennebula_id")) {
           nic = {
             'network_id': $(this).attr("opennebula_id")
           }
+        } else {
+          nic = undefined;
         }
-        nics.push(nic);
+
+        if (nic) {
+          nics.push(nic);
+        }
       });
 
       var instance_type = $(".provision_instance_types_ul .selected", context);
@@ -6294,26 +6612,17 @@ $(document).ready(function(){
           var template_id = role.vm_template;
           var role_html_id = "#provision_create_flow_role_"+index;
 
-          generate_cardinality_selector(
-            $(".provision_cardinality_selector", context),
-            role);
-
           OpenNebula.Template.show({
             data : {
                 id: template_id
             },
             success: function(request,template_json){
               var role_context = $(role_html_id)
-              //var template_nic = template_json.VMTEMPLATE.TEMPLATE.NIC
-              //var nics = []
-              //if ($.isArray(template_nic))
-              //    nics = template_nic
-              //else if (!$.isEmptyObject(template_nic))
-              //    nics = [template_nic]
-//
-              //generate_provision_instance_type_accordion(
-              //  $(".provision_capacity_selector", role_context),
-              //  template_json.VMTEMPLATE.TEMPLATE);
+
+              generate_cardinality_selector(
+                $(".provision_cardinality_selector", context),
+                role,
+                template_json);
 
               if (template_json.VMTEMPLATE.TEMPLATE.USER_INPUTS) {
                 generate_custom_attrs(
@@ -6434,46 +6743,15 @@ $(document).ready(function(){
     //
 
     var context = $("#provision_create_user");
-    var provision_rvms_quota_input = $(".provision_rvms_quota_input", context);
 
-    $( ".provision_rvms_quota_slider", context).on('change', function(){
-      provision_rvms_quota_input.val($(this).attr('data-slider'))
-    });
+    setup_provision_quota_widget(context);
 
-    provision_rvms_quota_input.change(function() {
-        $( ".provision_rvms_quota_slider", context).foundation('slider', 'set_value', this.value);
-    });
-
-    var provision_cpu_quota_input = $(".provision_cpu_quota_input", context);
-
-    $( ".provision_cpu_quota_slider", context).on('change', function(){
-      provision_cpu_quota_input.val($(this).attr('data-slider'))
-    });
-
-    provision_cpu_quota_input.change(function() {
-        $( ".provision_cpu_quota_slider", context).foundation('slider', 'set_value', this.value);
-    });
-
-    var provision_memory_quota_input = $(".provision_memory_quota_input", context);
-    var provision_memory_quota_tmp_input = $(".provision_memory_quota_tmp_input", context);
-
-    var update_final_memory_input = function() {
-      var value = provision_memory_quota_tmp_input.val();
-      if (value > 0) {
-       provision_memory_quota_input.val( Math.floor(value * 1024) );
-      } else {
-       provision_memory_quota_input.val(value);
-      }
-    }
-
-    $( ".provision_memory_quota_slider", context).on('change', function(){
-      provision_memory_quota_tmp_input.val($(this).attr('data-slider'));
-      update_final_memory_input();
-    });
-
-    provision_memory_quota_tmp_input.change(function() {
-        update_final_memory_input();
-        $( ".provision_memory_quota_slider", context).foundation('slider', 'set_value', this.value);
+    // Workaround to fix sliders. Apparently the setup fails while they are hidden
+    $('a[href="#provision_create_user_manual_quota"]', context).on("click", function(){
+      $(".provision_rvms_quota_input", context).change();
+      $(".provision_memory_quota_input", context).change();
+      $(".provision_memory_quota_tmp_input", context).change();
+      $(".provision_cpu_quota_input", context).change();
     });
 
     $("#provision_create_user").submit(function(){

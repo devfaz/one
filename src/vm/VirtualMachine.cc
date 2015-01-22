@@ -115,6 +115,16 @@ const char * VirtualMachine::monit_db_bootstrap = "CREATE TABLE IF NOT EXISTS "
     "vm_monitoring (vmid INTEGER, last_poll INTEGER, body MEDIUMTEXT, "
     "PRIMARY KEY(vmid, last_poll))";
 
+
+const char * VirtualMachine::showback_table = "vm_showback";
+
+const char * VirtualMachine::showback_db_names = "vmid, year, month, body";
+
+const char * VirtualMachine::showback_db_bootstrap =
+    "CREATE TABLE IF NOT EXISTS vm_showback "
+    "(vmid INTEGER, year INTEGER, month INTEGER, body MEDIUMTEXT, "
+    "PRIMARY KEY(vmid, year, month))";
+
 const char * VirtualMachine::NO_NIC_DEFAULTS[] = {"NETWORK_ID", "NETWORK",
     "NETWORK_UID", "NETWORK_UNAME"};
 
@@ -327,6 +337,32 @@ int VirtualMachine::insert(SqlDB * db, string& error_str)
     }
 
     // ------------------------------------------------------------------------
+    // Check the cost attributes
+    // ------------------------------------------------------------------------
+
+    if ( user_obj_template->get("CPU_COST", fvalue) == true )
+    {
+        if ( fvalue < 0 )
+        {
+            goto error_cpu_cost;
+        }
+
+        user_obj_template->erase("CPU_COST");
+        obj_template->add("CPU_COST", fvalue);
+    }
+
+    if ( user_obj_template->get("MEMORY_COST", fvalue) == true )
+    {
+        if ( fvalue < 0 )
+        {
+            goto error_memory_cost;
+        }
+
+        user_obj_template->erase("MEMORY_COST");
+        obj_template->add("MEMORY_COST", fvalue);
+    }
+
+    // ------------------------------------------------------------------------
     // Check the OS attribute
     // ------------------------------------------------------------------------
 
@@ -446,6 +482,14 @@ error_vcpu:
 
 error_memory:
     error_str = "MEMORY attribute must be a positive integer value.";
+    goto error_common;
+
+error_cpu_cost:
+    error_str = "CPU_COST attribute must be a positive float or integer value.";
+    goto error_common;
+
+error_memory_cost:
+    error_str = "MEMORY_COST attribute must be a positive float or integer value.";
     goto error_common;
 
 error_os:
@@ -649,7 +693,7 @@ int VirtualMachine::parse_defaults(string& error_str)
     if ( num > 1 )
     {
         error_str = "Only one NIC_DEFAULT attribute can be defined.";
-        return -1;
+        goto error_cleanup;
     }
 
     vatt = dynamic_cast<VectorAttribute *>(attr[0]);
@@ -657,7 +701,7 @@ int VirtualMachine::parse_defaults(string& error_str)
     if ( vatt == 0 )
     {
         error_str = "Wrong format for NIC_DEFAULT attribute.";
-        return -1;
+        goto error_cleanup;
     }
 
     for (int i=0; i < NUM_NO_NIC_DEFAULTS; i++)
@@ -677,6 +721,15 @@ int VirtualMachine::parse_defaults(string& error_str)
     obj_template->set(vatt);
 
     return 0;
+
+error_cleanup:
+
+    for (int i = 0; i < num ; i++)
+    {
+        delete attr[i];
+    }
+
+    return -1;
 }
 
 
@@ -2246,7 +2299,9 @@ VectorAttribute * VirtualMachine::get_attach_nic_info(
 
 int VirtualMachine::set_up_attach_nic(
                         int                      vm_id,
+                        set<int>&                vm_sgs,
                         VectorAttribute *        new_nic,
+                        vector<VectorAttribute*> &rules,
                         int                      max_nic_id,
                         int                      uid,
                         string&                  error_str)
@@ -2254,9 +2309,7 @@ int VirtualMachine::set_up_attach_nic(
     Nebula&             nd     = Nebula::instance();
     VirtualNetworkPool* vnpool = nd.get_vnpool();
 
-    // -------------------------------------------------------------------------
-    // Acquire the new network lease
-    // -------------------------------------------------------------------------
+    set<int> nic_sgs;
 
     int rc = vnpool->nic_attribute(new_nic, max_nic_id+1, uid, vm_id, error_str);
 
@@ -2264,6 +2317,15 @@ int VirtualMachine::set_up_attach_nic(
     {
         return -1;
     }
+
+    get_security_groups(new_nic, nic_sgs);
+
+    for (set<int>::iterator it = vm_sgs.begin(); it != vm_sgs.end(); it++)
+    {
+        nic_sgs.erase(*it);
+    }
+
+    get_security_group_rules(vm_id, nic_sgs, rules);
 
     return 0;
 }
@@ -2322,6 +2384,25 @@ VectorAttribute * VirtualMachine::delete_attach_nic()
     }
 
     return 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+void VirtualMachine::set_attach_nic(
+        VectorAttribute *       new_nic,
+        vector<VectorAttribute*> &rules)
+{
+    vector<VectorAttribute*>::iterator it;
+
+    new_nic->replace("ATTACH", "YES");
+
+    obj_template->set(new_nic);
+
+    for(it = rules.begin(); it != rules.end(); it++ )
+    {
+        obj_template->set(*it);
+    }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2570,10 +2651,7 @@ void VirtualMachine::delete_active_snapshot()
 
         if ( snap->vector_value("ACTIVE") == "YES" )
         {
-            if (obj_template->remove(snap) != 0)
-            {
-                delete snap;
-            }
+            delete obj_template->remove(snap);
 
             return;
         }
@@ -2601,6 +2679,11 @@ int VirtualMachine::get_network_leases(string& estr)
     Nebula& nd = Nebula::instance();
     vnpool     = nd.get_vnpool();
 
+    vector<VectorAttribute*>            sg_rules;
+    vector<VectorAttribute*>::iterator  it;
+
+    set<int> vm_sgs;
+
     num_nics   = user_obj_template->remove("NIC",nics);
 
     for (vector<Attribute*>::iterator it=nics.begin(); it != nics.end(); it++)
@@ -2625,6 +2708,15 @@ int VirtualMachine::get_network_leases(string& estr)
         {
             return -1;
         }
+    }
+
+    get_security_groups(vm_sgs);
+
+    get_security_group_rules(get_oid(), vm_sgs, sg_rules);
+
+    for(it = sg_rules.begin(); it != sg_rules.end(); it++ )
+    {
+        obj_template->set(*it);
     }
 
     return 0;
@@ -2691,11 +2783,14 @@ int VirtualMachine::release_network_leases(VectorAttribute const * nic, int vmid
     int     vnid;
     int     ar_id;
     string  mac;
+    string  error_msg;
 
     if ( nic == 0 )
     {
         return -1;
     }
+
+    release_security_groups(vmid, nic);
 
     if (nic->vector_value("NETWORK_ID", vnid) != 0)
     {
@@ -2730,6 +2825,120 @@ int VirtualMachine::release_network_leases(VectorAttribute const * nic, int vmid
     vn->unlock();
 
     return 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+void VirtualMachine::get_security_groups(set<int>& sgs) const
+{
+
+    string                        vnid;
+    string                        ip;
+    int                           num_nics;
+    vector<Attribute const  * >   nics;
+
+    num_nics = get_template_attribute("NIC", nics);
+
+    for(int i=0; i<num_nics; i++)
+    {
+        get_security_groups(dynamic_cast<VectorAttribute const *>(nics[i]),sgs);
+    }
+}
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+void VirtualMachine::get_security_group_rules(int id, set<int>& secgroups,
+        vector<VectorAttribute*> &rules)
+{
+    set<int>::iterator sg_it;
+
+    SecurityGroup*     sgroup;
+    SecurityGroupPool* sgroup_pool = Nebula::instance().get_secgrouppool();
+
+    vector<VectorAttribute*>::iterator rule_it;
+    vector<VectorAttribute*> sgroup_rules;
+
+    int                 vnet_id;
+    VirtualNetwork*     vnet;
+    VirtualNetworkPool* vnet_pool = Nebula::instance().get_vnpool();
+
+    for (sg_it = secgroups.begin(); sg_it != secgroups.end(); sg_it++, sgroup_rules.clear())
+    {
+        sgroup = sgroup_pool->get(*sg_it, true);
+
+        if (sgroup == 0)
+        {
+            continue;
+        }
+
+        sgroup->add_vm(id);
+
+        sgroup_pool->update(sgroup);
+
+        sgroup->get_rules(sgroup_rules);
+
+        sgroup->unlock();
+
+        for (rule_it = sgroup_rules.begin(); rule_it != sgroup_rules.end(); rule_it++)
+        {
+            if ( (*rule_it)->vector_value("NETWORK_ID", vnet_id) != -1 )
+            {
+                vector<VectorAttribute*> vnet_rules;
+
+                VectorAttribute * rule = *rule_it;
+
+                vnet = vnet_pool->get(vnet_id, true);
+
+                if (vnet == 0)
+                {
+                    continue;
+                }
+
+                vnet->process_security_rule(rule, vnet_rules);
+
+                delete rule;
+
+                rules.insert(rules.end(), vnet_rules.begin(), vnet_rules.end());
+
+                vnet->unlock();
+            }
+            else
+            {
+                rules.push_back(*rule_it);
+            }
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+void VirtualMachine::release_security_groups(int id, VectorAttribute const * nic)
+{
+    set<int>::iterator it;
+    set<int> secgroups;
+
+    SecurityGroup*      sgroup;
+    SecurityGroupPool*  sgroup_pool = Nebula::instance().get_secgrouppool();
+
+    get_security_groups(nic, secgroups);
+
+    for (it = secgroups.begin(); it != secgroups.end(); it++)
+    {
+        sgroup = sgroup_pool->get(*it, true);
+
+        if (sgroup == 0)
+        {
+            continue;
+        }
+
+        sgroup->del_vm(id);
+
+        sgroup_pool->update(sgroup);
+
+        sgroup->unlock();
+    }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -3228,8 +3437,12 @@ void VirtualMachine::set_auth_request(int uid,
 
     Nebula& nd = Nebula::instance();
 
-    ImagePool *           ipool  = nd.get_ipool();
-    VirtualNetworkPool *  vnpool = nd.get_vnpool();
+    ImagePool *          ipool  = nd.get_ipool();
+    VirtualNetworkPool * vnpool = nd.get_vnpool();
+    SecurityGroupPool *  sgpool = nd.get_secgrouppool();
+
+    set<int>        sgroups;
+    SecurityGroup * sgroup;
 
     num = tmpl->get("DISK",vectors);
 
@@ -3250,7 +3463,7 @@ void VirtualMachine::set_auth_request(int uid,
 
     num = tmpl->get("NIC",vectors);
 
-    for(int i=0; i<num; i++)
+    for(int i=0; i<num; i++, sgroups.clear())
     {
         vector = dynamic_cast<VectorAttribute * >(vectors[i]);
 
@@ -3260,6 +3473,23 @@ void VirtualMachine::set_auth_request(int uid,
         }
 
         vnpool->authorize_nic(vector,uid,&ar);
+
+        get_security_groups(vector, sgroups);
+
+        for(set<int>::iterator it = sgroups.begin(); it != sgroups.end(); it++)
+        {
+            sgroup = sgpool->get(*it, true);
+
+            if(sgroup != 0)
+            {
+                PoolObjectAuth perm;
+                sgroup->get_permissions(perm);
+
+                sgroup->unlock();
+
+                ar.add_auth(AuthRequest::USE, perm);
+            }
+        }
     }
 }
 

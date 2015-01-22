@@ -18,7 +18,9 @@
 #define _NEBULA_UTIL_H_
 
 #include <string>
+#include <sstream>
 #include <vector>
+#include <set>
 
 namespace one_util
 {
@@ -84,6 +86,87 @@ namespace one_util
             const std::string& st,
             char delim,
             bool clean_empty=true);
+
+    /**
+     * Splits a string, using the given delimiter
+     *
+     * @param st string to split
+     * @param delim delimiter character
+     * @param result where the result will be saved
+     * @param clean_empty true to clean empty split parts.
+     *  Example for st "a::b:c"
+     *      clean_empty true will return ["a", "b", "c"]
+     *      clean_empty fase will return ["a", "", "b", "c"]
+     */
+    template <class T>
+    void split_unique(
+            const std::string& st,
+            char delim,
+            std::set<T>& result,
+            bool clean_empty=true)
+    {
+        T elem;
+        std::vector<std::string>::const_iterator it;
+
+        std::vector<std::string> strings = split(st, delim, clean_empty);
+
+        for (it = strings.begin(); it != strings.end(); it++)
+        {
+            std::istringstream iss(*it);
+            iss >> elem;
+
+            if ( iss.fail() )
+            {
+                continue;
+            }
+
+            result.insert(elem);
+        }
+    }
+
+    /**
+     * Joins the given element with the delimiter
+     *
+     * @param first iterator
+     * @param last iterator
+     * @param delim delimiter character
+     * @return the joined strings
+     */
+    template <class Iterator>
+    std::string join(Iterator first, Iterator last, char delim)
+    {
+        std::ostringstream oss;
+
+        for(Iterator it = first; it != last; it++)
+        {
+            if (it != first)
+            {
+                oss << delim;
+            }
+
+            oss << *it;
+        }
+
+        return oss.str();
+    }
+
+    /**
+     * Creates a string from the given float, using fixed notation. If the
+     * number has any decimals, they will be truncated to 2.
+     *
+     * @param num
+     * @return
+     */
+    std::string float_to_str(const float &num);
+
+    /**
+     * Checks if a strings matches a regular expression
+     *
+     * @param pattern PCRE extended pattern
+     * @param subject the string to test
+     * @return 0 on match, another value otherwise
+     */
+    int regex_match(const char *pattern, const char *subject);
 };
 
 #endif /* _NEBULA_UTIL_H_ */

@@ -17,26 +17,14 @@
 var addresses_vnets = 0;
 var last_selected_row_ar;
 
-var create_vn_tmpl =
-'<div class="row">'+
-  '<div class="large-6 columns">'+
-    '<h3 id="create_vnet_header" class="subheader">'+tr("Create Virtual Network")+'</h3>'+
-  '</div>'+
-  '<div class="large-6 columns">'+
-     '<dl class="tabs right wizard_tabs" data-tab>\
-        <dd class="active"><a href="#vnet_wizard">'+tr("Wizard")+'</a></dd>\
-        <dd><a href="#vnet_advanced">'+tr("Advanced mode")+'</a></dd>\
-      </dl>\
-  </div>\
-</div>\
-<div class="tabs-content">\
-  <div class="content active" id="vnet_wizard">\
-    <form data-abide="ajax" id="create_vn_form_easy" action="" class="creation">\
+var create_vnet_wizard_html =
+    '<form data-abide="ajax" id="create_vnet_form_wizard" class="custom creation">\
       <div>\
         <dl id="vnet_create_tabs" class="tabs right-info-tabs text-center" data-tab>\
           <dd class="active"><a href="#vnetCreateGeneralTab"><i class="fa fa-globe"></i><br>'+tr("General")+'</a></dd>\
-          <dd><a href="#vnetCreateBridgeTab"><i class="fa fa-cog"></i><br>'+tr("Configuration")+'</a></dd>\
+          <dd><a href="#vnetCreateBridgeTab"><i class="fa fa-cog"></i><br>'+tr("Conf")+'</a></dd>\
           <dd><a href="#vnetCreateARTab"><i class="fa fa-align-justify"></i><br>'+tr("Addresses")+'</a></dd>\
+          <dd><a href="#vnetCreateSecurityTab"><i class="fa fa-shield"></i><br>'+tr("Security")+'</a></dd>\
           <dd><a href="#vnetCreateContextTab"><i class="fa fa-folder"></i><br>'+tr("Context")+'</a></dd>\
         </dl>\
         <div id="vnet_create_tabs_content" class="tabs-content">\
@@ -59,6 +47,24 @@ var create_vn_tmpl =
             </div>\
           </div>\
           <div class="content" id="vnetCreateBridgeTab">\
+            <div class="row">\
+              <div class="large-6 columns">\
+                <label for="mac_spoofing">\
+                  <input type="checkbox" wizard_field="FILTER_MAC_SPOOFING" value="YES" name="mac_spoofing" id="mac_spoofing" />\
+                  '+tr("Filter MAC spoofing")+'\
+                  <span class="tip">'+tr("Activate the filter to prevent mac spoofing. Only works with FW, 802.1Q and Ebtables network drivers.")+'</span>\
+                </label>\
+              </div>\
+            </div>\
+            <div class="row">\
+              <div class="large-6 columns">\
+                <label for="ip_spoofing">\
+                  <input type="checkbox" wizard_field="FILTER_IP_SPOOFING" value="YES" name="ip_spoofing" id="ip_spoofing" />\
+                  '+tr("Filter IP spoofing")+'\
+                  <span class="tip">'+tr("Activate the filter to prevent IP spoofing. Only works with FW, 802.1Q and Ebtables network drivers.")+'</span>\
+                </label>\
+              </div>\
+            </div>\
             <div class="row">\
               <div class="large-6 columns">\
                   <label for="bridge">'+tr("Bridge")+':\
@@ -122,7 +128,7 @@ var create_vn_tmpl =
             </div>\
           </div>\
           <div class="content" id="vnetCreateARTab">\
-            <div class="row">\
+            <div class="row" id="vnetCreateARTabCreate">\
               <div class="large-12 columns">\
                 <div class="row">\
                   <dl class="tabs vertical" id="vnet_wizard_ar_tabs" data-tab>\
@@ -135,6 +141,19 @@ var create_vn_tmpl =
                   <div class="tabs-content vertical" id="vnet_wizard_ar_tabs_content">\
                   </div>\
                 </div>\
+              </div>\
+            </div>\
+            <div class="row" id="vnetCreateARTabUpdate">\
+              <div class="large-12 columns">\
+                <p>'+tr("Address Ranges need to be managed in the individual Virtual Network panel")+'</p>\
+              </div>\
+            </div>\
+          </div>\
+          <div class="content" id="vnetCreateSecurityTab">\
+            '+generateSecurityGroupTableSelect("vnet_create")+'\
+            <div class="row" id="default_sg_warning">\
+              <div class="large-12 columns">\
+                <span class="radius secondary label"><i class="fa fa-warning"/> '+tr("The default Security Group 0 is automatically added to new Virtual Networks")+'</span>\
               </div>\
             </div>\
           </div>\
@@ -187,84 +206,24 @@ var create_vn_tmpl =
           </div>\
         </div>\
       </div>\
-      <div class="form_buttons">\
-        <button class="button success radius right" id="create_vn_submit_easy" value="vn/create">\
-           '+tr("Create")+'\
-        </button>\
-        <button id="wizard_vnet_reset_button" class="button secondary radius" type="reset" value="reset">'+tr("Reset")+'</button>\
-      </div>\
-    </form>\
-  </div>\
-  <div id="vnet_advanced" class="content">\
-    <form id="create_vn_form_manual" action="">\
-      <div class="row">\
-        <div class="columns large-12">\
-          <h4><small>'+tr("Write the Virtual Network template here")+'</small></h4>\
-        </div>\
-      </div>\
-      <div class="row">\
-        <div class="columns large-12">\
-          <textarea id="template" rows="15" style="width:100%; height:300px;"></textarea>\
-        </div>\
-      </div>\
-        <div class="form_buttons">\
-          <button class="button success right radius" id="create_vn_submit_manual" value="vn/create">'+tr("Create")+'</button>\
-          <button id="advanced_vnet_reset_button" class="button secondary radius" type="reset" value="reset">'+tr("Reset")+'</button>\
-        </div>\
-    </form>\
-  </div>\
-</div>\
-<a class="close-reveal-modal">&#215;</a>';
+    </form>';
 
-var update_vnet_tmpl =
-   '<form action="javascript:alert(\'js error!\');">\
-         <h3 style="margin-bottom:10px;">'+tr("Please, choose and modify the virtual network you want to update")+':</h3>\
-            <fieldset style="border-top:none;">\
-                 <label for="vnet_template_update_select">'+tr("Select a network")+':</label>\
-                 <select id="vnet_template_update_select" name="vnet_template_update_select"></select>\
-                 <div class="clear"></div>\
-                 <div>\
-                   <table class="permissions_table" style="padding:0 10px;">\
-                     <thead><tr>\
-                         <td style="width:130px">'+tr("Permissions")+':</td>\
-                         <td style="width:40px;text-align:center;">'+tr("Use")+'</td>\
-                         <td style="width:40px;text-align:center;">'+tr("Manage")+'</td>\
-                         <td style="width:40px;text-align:center;">'+tr("Admin")+'</td></tr></thead>\
-                     <tr>\
-                         <td>'+tr("Owner")+'</td>\
-                         <td style="text-align:center"><input type="checkbox" name="vnet_owner_u" class="owner_u" /></td>\
-                         <td style="text-align:center"><input type="checkbox" name="vnet_owner_m" class="owner_m" /></td>\
-                         <td style="text-align:center"><input type="checkbox" name="vnet_owner_a" class="owner_a" /></td>\
-                     </tr>\
-                     <tr>\
-                         <td>'+tr("Group")+'</td>\
-                         <td style="text-align:center"><input type="checkbox" name="vnet_owner_u" class="group_u" /></td>\
-                         <td style="text-align:center"><input type="checkbox" name="vnet_group_m" class="group_m" /></td>\
-                         <td style="text-align:center"><input type="checkbox" name="vnet_group_a" class="group_a" /></td>\
-                     </tr>\
-                     <tr>\
-                         <td>'+tr("Other")+'</td>\
-                         <td style="text-align:center"><input type="checkbox" name="vnet_other_u" class="other_u" /></td>\
-                         <td style="text-align:center"><input type="checkbox" name="vnet_other_m" class="other_m" /></td>\
-                         <td style="text-align:center"><input type="checkbox" name="vnet_other_a" class="other_a" /></td>\
-                     </tr>\
-                   </table>\
-                 </div>\
-                 <label for="vnet_template_update_textarea">'+tr("Template")+':</label>\
-                 <div class="clear"></div>\
-                 <textarea id="vnet_template_update_textarea" style="width:100%; height:14em;"></textarea>\
-            </fieldset>\
-            <fieldset>\
-                 <div class="form_buttons">\
-                    <button class="button" id="vnet_template_update_button" value="Network.update_template">\
-                       '+tr("Update")+'\
-                    </button>\
-                 </div>\
-            </fieldset>\
-</form>';
+
+var create_vnet_advanced_html =
+ '<form data-abide="ajax" id="create_vnet_form_advanced" class="custom creation">' +
+    '<div class="row">' +
+      '<div class="large-12 columns">' +
+        '<p>'+tr("Write the Virtual Network template here")+'</p>' +
+      '</div>' +
+    '</div>' +
+    '<div class="row">' +
+      '<div class="large-12 columns">' +
+        '<textarea id="template" rows="15" required></textarea>' +
+      '</div>' +
+    '</div>' +
+  '</form>';
 
 var dataTable_vNetworks;
-var $create_vn_dialog;
 var $lease_vn_dialog;
 
 //Setup actions
@@ -274,10 +233,8 @@ var vnet_actions = {
         type: "create",
         call: OpenNebula.Network.create,
         callback: function(request, response) {
-            // Reset the create wizard
-            $create_vn_dialog.foundation('reveal', 'close');
-            $create_vn_dialog.empty();
-            setupCreateVNetDialog();
+            $("a[href=back]", $("#vnets-tab")).trigger("click");
+            popFormDialog("create_vnet_form", $("#vnets-tab"));
 
             addVNetworkElement(request, response);
             notifyCustom(tr("Virtual Network created"), " ID: " + response.VNET.ID, false);
@@ -287,7 +244,14 @@ var vnet_actions = {
 
     "Network.create_dialog" : {
         type: "custom",
-        call: popUpCreateVnetDialog
+        call: function(){
+            Sunstone.popUpFormPanel("create_vnet_form", "vnets-tab", "create", true, function(context){
+                refreshSecurityGroupTableSelect(context, "vnet_create");
+
+                $("#default_sg_warning").show();
+                $("input#name",context).focus();
+            });
+        }
     },
 
     "Network.list" : {
@@ -464,6 +428,52 @@ var vnet_actions = {
         error: onError
     },
 
+    "Network.update_dialog" : {
+        type: "custom",
+        call: function(){
+            var selected_nodes = getSelectedNodes(dataTable_vNetworks);
+            if ( selected_nodes.length != 1 ) {
+                notifyMessage("Please select one (and just one) Virtual Network to update.");
+                return false;
+            }
+
+            var resource_id = ""+selected_nodes[0];
+            Sunstone.runAction("Network.show_to_update", resource_id);
+        }
+    },
+
+    "Network.show_to_update" : {
+        type: "single",
+        call: OpenNebula.Network.show,
+        callback: function(request, response) {
+            // TODO: global var, better use jquery .data
+            vnet_to_update_id = response.VNET.ID;
+
+            Sunstone.popUpFormPanel("create_vnet_form", "vnets-tab", "update", true, function(context){
+                fillVNetUpdateFormPanel(response.VNET, context);
+
+                $("#default_sg_warning").hide();
+            });
+        },
+        error: onError
+    },
+
+    "Network.update" : {
+        type: "single",
+        call: OpenNebula.Network.update,
+        callback: function(request, response){
+            $("a[href=back]", $("#vnets-tab")).trigger("click");
+            popFormDialog("create_vnet_form", $("#vnets-tab"));
+
+            notifyMessage(tr("Virtual Network updated correctly"));
+        },
+        error: function(request, response){
+            popFormDialog("create_vnet_form", $("#vnets-tab"));
+
+            onError(request, response);
+        }
+    },
+
     "Network.update_template" : {
         type: "single",
         call: OpenNebula.Network.update,
@@ -544,7 +554,11 @@ var vnet_buttons = {
         type: "create_dialog",
         layout: "create"
     },
-
+    "Network.update_dialog" : {
+        type: "action",
+        layout: "main",
+        text: tr("Update")
+    },
     "Network.reserve_dialog" : {
         type: "action",
         layout: "main",
@@ -605,7 +619,7 @@ var vnets_tab = {
     buttons: vnet_buttons,
     tabClass: "subTab",
     parentTab: "infra-tab",
-    search_input: '<input id="vnet_search" type="text" placeholder="'+tr("Search")+'" />',
+    search_input: '<input id="vnet_search" type="search" placeholder="'+tr("Search")+'" />',
     list_header: '<i class="fa fa-fw fa-globe"></i>&emsp;'+tr("Virtual Networks"),
     info_header: '<i class="fa fa-fw fa-globe"></i>&emsp;'+tr("Virtual Network"),
     subheader: '<span class="total_vnets"/> <small>'+tr("TOTAL")+'</small>&emsp;\
@@ -627,7 +641,25 @@ var vnets_tab = {
       </thead>\
       <tbody id="tbodyvnetworks">\
       </tbody>\
-    </table>'
+    </table>',
+    forms: {
+        "create_vnet_form": {
+            actions: {
+                create: {
+                    title: tr("Create Virtual Network"),
+                    submit_text: tr("Create")
+                },
+                update: {
+                    title: tr("Update Virtual Network"),
+                    submit_text: tr("Update"),
+                    reset_button: false
+                }
+            },
+            wizard_html: create_vnet_wizard_html,
+            advanced_html: create_vnet_advanced_html,
+            setup: initialize_create_vnet_dialog
+        }
+    }
 }
 
 Sunstone.addActions(vnet_actions);
@@ -705,6 +737,15 @@ function updateVNetworksView(request, network_list){
 function updateVNetworkInfo(request,vn){
     var vn_info = vn.VNET;
 
+    stripped_vn_template = $.extend({}, vn_info.TEMPLATE);
+    delete stripped_vn_template["SECURITY_GROUPS"];
+
+    var hidden_values = {};
+
+    if (vn_info.TEMPLATE.SECURITY_GROUPS != undefined){
+        hidden_values.SECURITY_GROUPS = vn_info.TEMPLATE.SECURITY_GROUPS;
+    }
+
     $(".resource-info-header", $("#vnets-tab")).html(vn_info.NAME);
 
     var reservation_row = '';
@@ -761,10 +802,11 @@ function updateVNetworkInfo(request,vn){
       </div>\
       <div class="row">\
         <div class="large-9 columns">' +
-            insert_extended_template_table(vn_info.TEMPLATE,
+            insert_extended_template_table(stripped_vn_template,
                                                        "Network",
                                                        vn_info.ID,
-                                                       "Attributes") +
+                                                       "Attributes",
+                                                       hidden_values) +
         '</div>\
       </div>';
 
@@ -780,6 +822,12 @@ function updateVNetworkInfo(request,vn){
         content: ar_list_tab_content(vn_info)
     };
 
+    var sg_tab = {
+        title : tr("Security"),
+        icon: "fa-shield",
+        content: sg_list_tab_content(vn_info)
+    };
+
     var leases_tab = {
         title: tr("Leases"),
         icon: "fa-list-ul",
@@ -789,6 +837,7 @@ function updateVNetworkInfo(request,vn){
 
     Sunstone.updateInfoPanelTab("vnet_info_panel","vnet_info_tab",info_tab);
     Sunstone.updateInfoPanelTab("vnet_info_panel","vnet_ar_list_tab",ar_tab);
+    Sunstone.updateInfoPanelTab("vnet_info_panel","vnet_sg_list_tab",sg_tab);
     Sunstone.updateInfoPanelTab("vnet_info_panel","vnet_leases_tab",leases_tab);
 
     Sunstone.popUpInfoPanel("vnet_info_panel", "vnets-tab");
@@ -829,8 +878,12 @@ function updateVNetworkInfo(request,vn){
 
         $("#ar_show_info", $("#vnet_info_panel")).html(ar_show_info(vn_info, id));
 
+        setup_ar_show_info($("#ar_show_info", $("#vnet_info_panel")), vn_info, id);
+
         return false;
     });
+
+    setup_sg_list_tab_content(vn_info);
 
     var leases_dataTable = $("#leases_datatable",$("#vnet_info_panel")).dataTable({
         "bSortClasses" : false,
@@ -1038,6 +1091,11 @@ function ar_show_info(vn_info, ar_id){
     delete ar["LEASES"];
     delete ar["PARENT_NETWORK_AR_ID"];
 
+    var do_secgroups = (ar.SECURITY_GROUPS != undefined &&
+                        ar.SECURITY_GROUPS.length != 0);
+
+    delete ar["SECURITY_GROUPS"];
+
     html +=
           '</tbody>\
         </table>';
@@ -1056,13 +1114,96 @@ function ar_show_info(vn_info, ar_id){
     });
 
     html +=
-      '</div>\
+          '</tbody>\
+        </table>\
+      </div>\
     </div>';
+
+    if (do_secgroups){
+        html +=
+        '<div class="row collapse">\
+          <div class="large-12 columns">\
+            <table class="dataTable extended_table">\
+              <thead>\
+                <tr><th>'+tr("Security Groups")+'</th></tr>\
+              </thead>\
+              <tbody/>\
+            </table>\
+          </div>\
+          <div class="large-12 columns">'+
+            generateSecurityGroupTableSelect("ar_show_info")+
+          '</div>\
+        </div>';
+    }
 
     return html;
 }
 
-// Prints the lis of leases depending on the Vnet TYPE
+function setup_ar_show_info(section, vn_info, ar_id){
+    var ar = get_ar(vn_info, ar_id);
+
+    if(ar == undefined){
+        return "";
+    }
+
+    if (ar.SECURITY_GROUPS != undefined &&
+        ar.SECURITY_GROUPS.length != 0){
+
+        var secgroups = ar.SECURITY_GROUPS.split(",");
+
+        var opts = {
+            read_only: true,
+            fixed_ids: secgroups
+        }
+
+        setupSecurityGroupTableSelect(section, "ar_show_info", opts);
+
+        refreshSecurityGroupTableSelect(section, "ar_show_info");
+    }
+}
+
+function sg_list_tab_content(vn_info){
+
+    var html =
+    '<form id="sg_list_form" vnid="'+vn_info.ID+'">';
+
+    html +=
+        '<div class="row collapse">\
+          <div class="large-12 columns">';
+
+    html += '<span class="right">';
+
+    html += '</span></div></div>';
+
+    html += '<div class="row collapse">\
+        '+generateSecurityGroupTableSelect("sg_list")+'\
+      </div>\
+    </form>';
+
+    return html;
+}
+
+function setup_sg_list_tab_content(vn_info){
+
+    var secgroups = [];
+
+    if (vn_info.TEMPLATE.SECURITY_GROUPS != undefined &&
+        vn_info.TEMPLATE.SECURITY_GROUPS.length != 0){
+
+        secgroups = vn_info.TEMPLATE.SECURITY_GROUPS.split(",");
+    }
+
+    var opts = {
+        read_only: true,
+        fixed_ids: secgroups
+    }
+
+    setupSecurityGroupTableSelect($("#vnet_info_panel"), "sg_list", opts);
+
+    refreshSecurityGroupTableSelect($("#vnet_info_panel"), "sg_list");
+}
+
+// Prints the list of leases depending on the Vnet TYPE
 // It adds the "add lease", "hold lease" fields, and each lease comes with
 // hold, release buttons etc. Listeners in setupLeasesOps()
 function printLeases(vn_info){
@@ -1160,14 +1301,7 @@ function printLeases(vn_info){
     return html;
 }
 
-//Prepares the vnet creation dialog
-function setupCreateVNetDialog() {
-    dialogs_context.append('<div id="create_vn_dialog"></div>');
-    $create_vn_dialog = $('#create_vn_dialog',dialogs_context)
-    var dialog = $create_vn_dialog;
-    dialog.html(create_vn_tmpl);
-
-    dialog.addClass("reveal-modal medium").attr("data-reveal", "");
+function initialize_create_vnet_dialog(dialog) {
 
     var number_of_ar = 0;
 
@@ -1197,54 +1331,56 @@ function setupCreateVNetDialog() {
         return false;
     });
 
+    $("#vnetCreateARTab #vnetCreateARTabUpdate", dialog).hide();
+
     $('#network_mode',dialog).change(function(){
         $('input,select#vlan,label[for!="network_mode"]', $(this).parent()).hide();
         $('input', $(this).parent()).val("");
         switch ($(this).val()) {
         case "default":
-            $('input#bridge,label[for="bridge"]',$create_vn_dialog).show().prop('wizard_field_disabled', false);
-            $('input#phydev,label[for="phydev"]',$create_vn_dialog).hide().prop('wizard_field_disabled', true);
-            $('select#vlan,label[for="vlan"]',$create_vn_dialog).hide().prop('wizard_field_disabled', true);
-            $('input#vlan_id,label[for="vlan_id"]',$create_vn_dialog).hide().prop('wizard_field_disabled', true);
+            $('input#bridge,label[for="bridge"]',dialog).show().prop('wizard_field_disabled', false);
+            $('input#phydev,label[for="phydev"]',dialog).hide().prop('wizard_field_disabled', true);
+            $('select#vlan,label[for="vlan"]',dialog).hide().prop('wizard_field_disabled', true);
+            $('input#vlan_id,label[for="vlan_id"]',dialog).hide().prop('wizard_field_disabled', true);
 
-            $('input#phydev',$create_vn_dialog).removeAttr('required');
-            $('input#bridge',$create_vn_dialog).attr('required', '');
+            $('input#phydev',dialog).removeAttr('required');
+            $('input#bridge',dialog).attr('required', '');
             break;
         case "802.1Q":
-            $('input#bridge,label[for="bridge"]',$create_vn_dialog).show().prop('wizard_field_disabled', false);
-            $('input#phydev,label[for="phydev"]',$create_vn_dialog).show().prop('wizard_field_disabled', false);
-            $('select#vlan,label[for="vlan"]',$create_vn_dialog).show().prop('wizard_field_disabled', false);
-            $('input#vlan_id,label[for="vlan_id"]',$create_vn_dialog).show().prop('wizard_field_disabled', false);
+            $('input#bridge,label[for="bridge"]',dialog).show().prop('wizard_field_disabled', false);
+            $('input#phydev,label[for="phydev"]',dialog).show().prop('wizard_field_disabled', false);
+            $('select#vlan,label[for="vlan"]',dialog).show().prop('wizard_field_disabled', false);
+            $('input#vlan_id,label[for="vlan_id"]',dialog).show().prop('wizard_field_disabled', false);
 
-            $('input#phydev',$create_vn_dialog).removeAttr('required');
-            $('input#bridge',$create_vn_dialog).removeAttr('required');
+            $('input#phydev',dialog).removeAttr('required');
+            $('input#bridge',dialog).removeAttr('required');
             break;
         case "ebtables":
-            $('input#bridge,label[for="bridge"]',$create_vn_dialog).show().prop('wizard_field_disabled', false);
-            $('input#phydev,label[for="phydev"]',$create_vn_dialog).hide().prop('wizard_field_disabled', true);
-            $('select#vlan,label[for="vlan"]',$create_vn_dialog).show().prop('wizard_field_disabled', false);
-            $('input#vlan_id,label[for="vlan_id"]',$create_vn_dialog).hide().prop('wizard_field_disabled', true);
+            $('input#bridge,label[for="bridge"]',dialog).show().prop('wizard_field_disabled', false);
+            $('input#phydev,label[for="phydev"]',dialog).hide().prop('wizard_field_disabled', true);
+            $('select#vlan,label[for="vlan"]',dialog).show().prop('wizard_field_disabled', false);
+            $('input#vlan_id,label[for="vlan_id"]',dialog).hide().prop('wizard_field_disabled', true);
 
-            $('input#phydev',$create_vn_dialog).removeAttr('required');
-            $('input#bridge',$create_vn_dialog).attr('required', '');
+            $('input#phydev',dialog).removeAttr('required');
+            $('input#bridge',dialog).attr('required', '');
             break;
         case "openvswitch":
-            $('input#bridge,label[for="bridge"]',$create_vn_dialog).show().prop('wizard_field_disabled', false);
-            $('input#phydev,label[for="phydev"]',$create_vn_dialog).hide().prop('wizard_field_disabled', true);
-            $('select#vlan,label[for="vlan"]',$create_vn_dialog).show().prop('wizard_field_disabled', false);
-            $('input#vlan_id,label[for="vlan_id"]',$create_vn_dialog).show().prop('wizard_field_disabled', false);
+            $('input#bridge,label[for="bridge"]',dialog).show().prop('wizard_field_disabled', false);
+            $('input#phydev,label[for="phydev"]',dialog).hide().prop('wizard_field_disabled', true);
+            $('select#vlan,label[for="vlan"]',dialog).show().prop('wizard_field_disabled', false);
+            $('input#vlan_id,label[for="vlan_id"]',dialog).show().prop('wizard_field_disabled', false);
 
-            $('input#phydev',$create_vn_dialog).removeAttr('required');
-            $('input#bridge',$create_vn_dialog).attr('required', '');
+            $('input#phydev',dialog).removeAttr('required');
+            $('input#bridge',dialog).attr('required', '');
             break;
         case "vmware":
-            $('input#bridge,label[for="bridge"]',$create_vn_dialog).show();
-            $('input#phydev,label[for="phydev"]',$create_vn_dialog).hide();
-            $('select#vlan,label[for="vlan"]',$create_vn_dialog).show();
-            $('input#vlan_id,label[for="vlan_id"]',$create_vn_dialog).show();
+            $('input#bridge,label[for="bridge"]',dialog).show();
+            $('input#phydev,label[for="phydev"]',dialog).hide();
+            $('select#vlan,label[for="vlan"]',dialog).show();
+            $('input#vlan_id,label[for="vlan_id"]',dialog).show();
 
-            $('input#phydev',$create_vn_dialog).removeAttr('required');
-            $('input#bridge',$create_vn_dialog).attr('required', '');
+            $('input#phydev',dialog).removeAttr('required');
+            $('input#bridge',dialog).attr('required', '');
             break;
         };
 
@@ -1255,18 +1391,28 @@ function setupCreateVNetDialog() {
     //Initialize shown options
     $('#network_mode',dialog).trigger("change");
 
+    setupSecurityGroupTableSelect(dialog, "vnet_create", {"multiple_choice": true});
+
     setupCustomTags($("#vnetCreateContextTab", dialog));
 
-    //Handle submission of the easy mode
-    $('#create_vn_form_easy',dialog).on('invalid', function () {
-        notifyError(tr("One or more required fields are missing."));
-    }).on('valid', function () {
+    dialog.foundation();
+
+    //Process form
+    $('#create_vnet_form_wizard',dialog).on('invalid.fndtn.abide', function () {
+        notifyError(tr("One or more required fields are missing or malformed."));
+        popFormDialog("create_vnet_form", $("#vnets-tab"));
+    }).on('valid.fndtn.abide', function() {
         //Fetch values
         var network_json = {};
 
         retrieveWizardFields($("#vnetCreateGeneralTab", dialog), network_json);
         retrieveWizardFields($("#vnetCreateBridgeTab", dialog), network_json);
         retrieveWizardFields($("#vnetCreateContextTab", dialog), network_json);
+
+        var secgroups = retrieveSecurityGroupTableSelect(dialog, "vnet_create");
+        if (secgroups != undefined && secgroups.length != 0){
+            network_json["SECURITY_GROUPS"] = secgroups.join(",");
+        }
 
         retrieveCustomTags($("#vnetCreateContextTab", dialog), network_json);
 
@@ -1281,50 +1427,97 @@ function setupCreateVNetDialog() {
             }
         });
 
-        //Create the VNetwork.
+        if ($('#create_vnet_form_wizard',dialog).attr("action") == "create") {
+            network_json = {
+                "vnet" : network_json
+            };
 
-        network_json = {
-            "vnet" : network_json
-        };
-
-        Sunstone.runAction("Network.create",network_json);
-        return false;
+            Sunstone.runAction("Network.create",network_json);
+            return false;
+        } else if ($('#create_vnet_form_wizard',dialog).attr("action") == "update") {
+            Sunstone.runAction("Network.update", vnet_to_update_id, convert_template_to_string(network_json));
+            return false;
+        }
     });
 
-    $('#create_vn_submit_manual',dialog).click(function(){
-        var template=$('#template',dialog).val();
-        var vnet_json = {vnet: {vnet_raw: template}};
-        Sunstone.runAction("Network.create",vnet_json);
-        return false;
-    });
+    $('#create_vnet_form_advanced',dialog).on('invalid.fndtn.abide', function () {
+        notifyError(tr("One or more required fields are missing or malformed."));
+        popFormDialog("create_vnet_form", $("#vnets-tab"));
+    }).on('valid.fndtn.abide', function() {
+        if ($('#create_vnet_form_advanced',dialog).attr("action") == "create") {
 
-    $('#wizard_vnet_reset_button').click(function(){
-        $create_vn_dialog.html("");
-        setupCreateVNetDialog();
+            var template = $('textarea#template',dialog).val();
+            var vnet_json = {vnet: {vnet_raw: template}};
+            Sunstone.runAction("Network.create",vnet_json);
+            return false;
 
-        popUpCreateVnetDialog();
-    });
+        } else if ($('#create_vnet_form_advanced',dialog).attr("action") == "update") {
+            var template_raw = $('textarea#template',dialog).val();
 
-    $('#advanced_vnet_reset_button').click(function(){
-        $create_vn_dialog.html("");
-        setupCreateVNetDialog();
-
-        popUpCreateVnetDialog();
-        $("a[href='#vnet_advanced']").click();
+            Sunstone.runAction("Network.update",vnet_to_update_id,template_raw);
+            return false;
+          }
     });
 
     setupTips(dialog);
-
-    dialog.foundation();
 
     // Add first AR
     $("#vnet_wizard_ar_btn", dialog).trigger("click");
 }
 
-function popUpCreateVnetDialog() {
-    $create_vn_dialog.foundation().foundation('reveal', 'open');
+function fillVNetUpdateFormPanel(vnet, dialog){
 
-    $("input#name",$create_vn_dialog).focus();
+    // Populates the Avanced mode Tab
+    $('#template',dialog).val(convert_template_to_string(vnet.TEMPLATE).replace(/^[\r\n]+$/g, ""));
+
+    $('[wizard_field="NAME"]',dialog).val(
+        escapeDoubleQuotes(htmlDecode( vnet.NAME ))).
+        prop("disabled", true).
+        prop('wizard_field_disabled', true);
+
+    fillWizardFields($("#vnetCreateGeneralTab", dialog), vnet.TEMPLATE);
+    fillWizardFields($("#vnetCreateBridgeTab", dialog), vnet.TEMPLATE);
+    fillWizardFields($("#vnetCreateContextTab", dialog), vnet.TEMPLATE);
+
+    // Show all network mode inputs, and make them not required. This will change
+    // if a different network model is selected
+    $('input#bridge,label[for="bridge"]',dialog).show().prop('wizard_field_disabled', false).removeAttr('required');
+    $('input#phydev,label[for="phydev"]',dialog).show().prop('wizard_field_disabled', false).removeAttr('required');
+    $('select#vlan,label[for="vlan"]',dialog).show().prop('wizard_field_disabled', false).removeAttr('required');
+    $('input#vlan_id,label[for="vlan_id"]',dialog).show().prop('wizard_field_disabled', false).removeAttr('required');
+
+    if (vnet.TEMPLATE["SECURITY_GROUPS"] != undefined &&
+        vnet.TEMPLATE["SECURITY_GROUPS"].length != 0){
+
+        var secgroups = vnet.TEMPLATE["SECURITY_GROUPS"].split(",");
+
+        selectSecurityGroupTableSelect(
+                $("#vnetCreateSecurityTab", dialog),
+                "vnet_create",
+                { ids: secgroups });
+
+    } else {
+        refreshSecurityGroupTableSelect(dialog, "vnet_create");
+    }
+
+    // Delete so these attributes don't end in the custom tags table also
+    delete vnet.TEMPLATE["SECURITY_GROUPS"];
+
+    var fields = $('[wizard_field]', dialog);
+
+    fields.each(function(){
+        var field = $(this);
+        var field_name = field.attr('wizard_field');
+
+        delete vnet.TEMPLATE[field_name];
+    });
+
+    fillCustomTags($("#vnetCreateContextTab", dialog), vnet.TEMPLATE);
+
+    // Remove the first AR added in initialize_
+    $("#vnetCreateARTab i.remove-tab", dialog).trigger("click");
+    $("#vnetCreateARTab #vnetCreateARTabUpdate", dialog).show();
+    $("#vnetCreateARTab #vnetCreateARTabCreate", dialog).hide();
 }
 
 function add_ar_tab(ar_id, dialog) {
@@ -1349,7 +1542,7 @@ function add_ar_tab(ar_id, dialog) {
 
 function generate_ar_tab_content(str_ar_tab_id){
     var html =
-    '<div class="row">\
+    '<div class="row" name="str_ar_tab_id" str_ar_tab_id="'+str_ar_tab_id+'">\
       <div class="large-12 columns">\
         <input wizard_field="TYPE" type="radio" name="'+str_ar_tab_id+'_ar_type" id="'+str_ar_tab_id+'_ar_type_ip4" value="IP4"/><label for="'+str_ar_tab_id+'_ar_type_ip4">'+tr("IPv4")+'</label>\
         <input wizard_field="TYPE" type="radio" name="'+str_ar_tab_id+'_ar_type" id="'+str_ar_tab_id+'_ar_type_ip4_6" value="IP4_6"/><label for="'+str_ar_tab_id+'_ar_type_ip4_6">'+tr("IPv4/6")+'</label>\
@@ -1392,20 +1585,35 @@ function generate_ar_tab_content(str_ar_tab_id){
         </label>\
         <input wizard_field="ULA_PREFIX" type="text" name="ULA_PREFIX" id="'+str_ar_tab_id+'_ula_prefix"/>\
       </div>\
-    </div>\
-    <div class="row">\
-      <hr>\
-      <div class="large-12 columns">\
-        <span>' + tr("Custom attributes") + '</span>\
-        <br>\
-        <br>\
+    </div>'+
+    generateAdvancedSection({
+      title: tr("Advanced Options"),
+      html_id: 'advanced_vnet_create_ar',
+      content:'<div class="row">\
+        <div class="large-12 columns">\
+          <span>' + tr("Custom attributes") + '</span>\
+          <br>\
+          <br>\
+        </div>\
       </div>\
-    </div>\
-    <div class="row" id="'+str_ar_tab_id+'_custom_tags">\
-      <div class="12 columns">'+
-        customTagsHtml()+
-      '</div>\
-    </div>';
+      <div class="row" id="'+str_ar_tab_id+'_custom_tags">\
+        <div class="12 columns">'+
+          customTagsHtml()+
+        '</div>\
+      </div>\
+      <div class="row">\
+        <br>\
+        <br>\
+        <hr>\
+        <div class="large-12 columns">\
+          <span>' + tr("Security Groups") + '</span>\
+          <br>\
+          <br>\
+        </div>\
+      </div>\
+      <div class="row" id="'+str_ar_tab_id+'_security_groups">\
+        '+generateSecurityGroupTableSelect(str_ar_tab_id)+'\
+      </div>'});
 
     return html;
 }
@@ -1441,6 +1649,11 @@ function setup_ar_tab_content(ar_section, str_ar_tab_id) {
     $('input#'+str_ar_tab_id+'_ar_type_ip4',ar_section).change();
 
     setupCustomTags($('#'+str_ar_tab_id+'_custom_tags',ar_section));
+
+    setupSecurityGroupTableSelect(ar_section, str_ar_tab_id,
+        {"multiple_choice": true});
+
+    refreshSecurityGroupTableSelect(ar_section, str_ar_tab_id);
 
     setupTips(ar_section);
 }
@@ -1482,32 +1695,20 @@ function retrieve_ar_tab_data(ar_section){
 
     retrieveCustomTags(ar_section, data);
 
+    var str_ar_tab_id = $('div[name="str_ar_tab_id"]', ar_section).attr("str_ar_tab_id");
+
+    var secgroups = retrieveSecurityGroupTableSelect(ar_section, str_ar_tab_id);
+    if (secgroups != undefined && secgroups.length != 0){
+        data["SECURITY_GROUPS"] = secgroups.join(",");
+    }
+
     return data
 }
 
 function fill_ar_tab_data(ar_json, ar_section){
+    fillWizardFields(ar_section, ar_json);
+
     var fields = $('[wizard_field]',ar_section);
-
-    fields.each(function(){
-        var field = $(this);
-        var field_name = field.attr('wizard_field');
-        if (ar_json[field_name]){
-            switch(field.attr("type")){
-            case "radio":
-                var checked = (field.val() == ar_json[field_name]);
-
-                field.prop("checked", checked );
-
-                if(checked){
-                    field.change();
-                }
-                break;
-            default:
-                field.val(escapeDoubleQuotes(htmlDecode(ar_json[field_name])));
-                field.change();
-            }
-        }
-    });
 
     fields.each(function(){
         var field = $(this);
@@ -1520,6 +1721,16 @@ function fill_ar_tab_data(ar_json, ar_section){
     delete ar_json["AR_ID"];
     delete ar_json["USED_LEASES"];
     delete ar_json["LEASES"];
+
+    if (ar_json["SECURITY_GROUPS"] != undefined &&
+        ar_json["SECURITY_GROUPS"].length != 0){
+
+        var secgroups = ar_json["SECURITY_GROUPS"].split(",");
+
+        selectSecurityGroupTableSelect(ar_section, "update_ar", {ids: secgroups});
+    }
+
+    delete ar_json["SECURITY_GROUPS"];
 
     fillCustomTags(ar_section, ar_json);
 
@@ -1628,6 +1839,9 @@ function setupLeasesOps(){
 
 function popUpAddAR(id){
     $('#vnet_id',$add_ar_dialog).text(id);
+
+    refreshSecurityGroupTableSelect($add_ar_dialog, "add_ar");
+
     $add_ar_dialog.foundation().foundation('reveal', 'open');
 }
 
@@ -1690,6 +1904,8 @@ function setupAddARDialog(){
 function popUpUpdateAR(id, ar){
     $('#vnet_id',$update_ar_dialog).text(id);
     $('#ar_id',$update_ar_dialog).text(ar.AR_ID);
+
+    refreshSecurityGroupTableSelect($update_ar_dialog, "update_ar");
 
     fill_ar_tab_data($.extend({}, ar), $update_ar_dialog);
 
@@ -2027,7 +2243,6 @@ $(document).ready(function(){
 
       Sunstone.runAction("Network.list");
 
-      setupCreateVNetDialog();
       setupLeasesOps();
 
       setupAddARDialog();

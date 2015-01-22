@@ -141,17 +141,24 @@ table.dataTable {
     }
 }
 
+table:not(.no-hover) {
 
-tr.odd:hover td:not(.dataTables_empty) {
-    background-color: #2ba6cb !important;
-    cursor: pointer;
-    color: #FFF !important;
+    tr.odd:hover td:not(.dataTables_empty) {
+        background-color: #2ba6cb !important;
+        cursor: pointer;
+        color: #FFF !important;
+    }
+
+    tr.even:hover td:not(.dataTables_empty) {
+        background-color: #2ba6cb !important;
+        cursor: pointer;
+        color: #FFF !important;
+    }
 }
 
-tr.even:hover td:not(.dataTables_empty) {
-    background-color: #2ba6cb !important;
+td.open-control:hover {
     cursor: pointer;
-    color: #FFF !important;
+
 }
 
 input.search {
@@ -1116,4 +1123,13 @@ hr {
   .support_connect_button {
     margin-top: 15px;
   }
+}
+
+#user_ssh_public_key_text, #config_ssh_public_key_text {
+  font-size: 0.875rem; 
+  color: #777; 
+  padding: 0px 10px; 
+  overflow-x:hidden; 
+  text-overflow: 
+  ellipsis; height: 120px;
 }

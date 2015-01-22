@@ -47,6 +47,19 @@ var top_interval_ids = {};
 var QUOTA_LIMIT_DEFAULT   = "-1";
 var QUOTA_LIMIT_UNLIMITED = "-2";
 
+function tr(str){
+    var tmp = locale[str];
+    if ( tmp == null || tmp == "" ) {
+        //console.debug("Missing translation: "+str);
+        tmp = str;
+    }
+    return tmp;
+};
+var $months = new Array(
+        tr("January"),tr("February"),tr("March"),tr("April"),tr("May"),
+        tr("June"),tr("July"),tr("August"),tr("September"),tr("October"),
+        tr("November"),tr("December"));
+
 //Sunstone configuration is formed by predifined "actions", main tabs
 //and "info_panels". Each tab has "content" and "buttons". Each
 //"info_panel" has "tabs" with "content".
@@ -167,9 +180,15 @@ var Sunstone = {
 
         var form_obj = SunstoneCfg["form_panels"][form_name];
 
+        $(".reset_button", context).show();
+
         if (action) {
             $(".right-form-title", context).text(form_obj["actions"][action]["title"]);
             $(".submit_button", context).text(form_obj["actions"][action]["submit_text"]);
+
+            if (form_obj["actions"][action]["reset_button"] == false) {
+                $(".reset_button", context).hide();
+            }
         }
 
         setTimeout(function() {
@@ -178,8 +197,8 @@ var Sunstone = {
                     action = $("#"+form_name+"_wizard", context).attr("action")
                 }
 
-                $("#"+form_name+"_wizard", context).remove();
-                $("#"+form_name+"_advanced", context).remove();
+                $("#advancedForms", context).empty();
+                $("#wizardForms", context).empty();
             }
 
             if ($("#"+form_name+"_wizard", context).length == 0) {
@@ -788,7 +807,7 @@ function insertButtonsInTab(tab_name, panel_name, panel_buttons, custom_context)
 
                 "<span id='"+custom_id+"form_buttons' class='only-right-form' style='display: none'>"+
                     '<span id="'+custom_id+'reset_button" class="left" style="margin-left: 10px;">'+
-                        '<a class="button small secondary radius" href="submit">'+tr("Reset")+'</a>'+
+                        '<a class="button small secondary radius reset_button" href="submit">'+tr("Reset")+'</a>'+
                     '</span>'+
                     '<span id="'+custom_id+'submit_button" class="left" style="margin-left: 10px;">'+
                         '<a class="button small success radius submit_button" href="submit">'+tr("Create")+'</a>'+
@@ -1202,11 +1221,7 @@ function pretty_time_runtime(time){
 
 function _format_date(unix_timestamp) {
   var difference_in_seconds = (Math.round((new Date()).getTime() / 1000)) - unix_timestamp,
-      current_date = new Date(unix_timestamp * 1000), minutes, hours,
-      months = new Array(
-        'January','February','March','April','May',
-        'June','July','August','September','October',
-        'November','December');
+      current_date = new Date(unix_timestamp * 1000), minutes, hours;
 
   if(difference_in_seconds < 60) {
     return difference_in_seconds + "s" + " ago";
@@ -1218,9 +1233,9 @@ function _format_date(unix_timestamp) {
     return hours + "h" + " ago";
   } else if (difference_in_seconds > 60*60*24){
     if(current_date.getYear() !== new Date().getYear())
-      return current_date.getDay() + " " + months[current_date.getMonth()].substr(0,3) + " " + _fourdigits(current_date.getYear());
+      return current_date.getDay() + " " + $months[current_date.getMonth()].substr(0,3) + " " + _fourdigits(current_date.getYear());
     else {
-        return current_date.getDay() + " " + months[current_date.getMonth()].substr(0,3);
+        return current_date.getDay() + " " + $months[current_date.getMonth()].substr(0,3);
     }
   }
 
@@ -1788,6 +1803,13 @@ function getZoneName(id){
     return id;
 };
 
+function getSecurityGroupName(id){
+    if (typeof(dataTable_security_groups) != "undefined"){
+        return getName(id,dataTable_security_groups,4);
+    }
+    return id;
+}
+
 // Returns the value of the column with the resource of specified
 // id in the dataTable.
 function getName(id,dataTable,name_col){
@@ -1827,8 +1849,6 @@ function getValue(filter_str,filter_col,value_col,dataTable){
 //Replaces all class"tip" divs with an information icon that
 //displays the tip information on mouseover.
 function setupTips(context, position){
-
-    $('ui-dialog').css('z-index', '1000')
     //For each tip in this context
     $('.tip',context).each(function(){
         var obj = $(this);
@@ -2947,7 +2967,28 @@ function emptyQuotas(resource_info){
             $.isEmptyObject(resource_info.NETWORK_QUOTA) );
 }
 
+// If the VM quotas are empty, inits the VM counters to 0, and sets the limit
+// to 'default'. It is not applied to oneadmin user/group
+function initEmptyQuotas(resource){
+    if ($.isEmptyObject(resource.VM_QUOTA) && resource.ID != 0){
+        resource.VM_QUOTA = {
+            VM: {
+                VMS         : QUOTA_LIMIT_DEFAULT,
+                VMS_USED    : 0,
+                CPU         : QUOTA_LIMIT_DEFAULT,
+                CPU_USED    : 0,
+                MEMORY      : QUOTA_LIMIT_DEFAULT,
+                MEMORY_USED : 0,
+                VOLATILE_SIZE      : QUOTA_LIMIT_DEFAULT,
+                VOLATILE_SIZE_USED : 0
+            }
+        }
+    }
+}
+
 function initQuotasPanel(resource_info, default_quotas, parent_id_str, edit_enabled){
+    initEmptyQuotas(resource_info);
+
     var vms_quota = Quotas.vms(resource_info, default_quotas);
     var cpu_quota = Quotas.cpu(resource_info, default_quotas);
     var memory_quota = Quotas.memory(resource_info, default_quotas);
@@ -4747,6 +4788,300 @@ function time_UTC(time){
     return d.getUTCFullYear() + '/' + (d.getUTCMonth()+1) + '/' + d.getUTCDate();
 }
 
+
+// div is a jQuery selector
+// The following options can be set:
+//   fixed_user     fix an owner user ID
+//   fixed_group    fix an owner group ID
+//   init_group_by  "user", "group", "vm". init the group-by selector
+//   fixed_group_by "user", "group", "vm". set a fixed group-by selector
+function showbackGraphs(div, opt){
+
+    div.html(
+    '<div class="row">\
+      <div id="showback_owner_container" class="left columns">\
+        <label for="showback_owner">' +  tr("Filter") + '</label>\
+        <div class="row">\
+          <div class="large-5 columns">\
+            <select id="showback_owner" name="showback_owner">\
+              <option value="showback_owner_all">' + tr("All") + '</option>\
+              <option value="showback_owner_group">' + tr("Group") + '</option>\
+              <option value="showback_owner_user">' + tr("User") + '</option>\
+            </select>\
+          </div>\
+          <div class="large-7 columns">\
+            <div id="showback_owner_select"/>\
+          </div>\
+        </div>\
+      </div>\
+      <div id="showback_button_container" class="left columns">\
+        <button class="button radius success right" id="showback_submit" type="button">'+tr("Get Showback")+'</button>\
+      </div>\
+    </div>\
+    <div id="showback_placeholder">\
+      <div class="row">\
+        <div class="large-8 large-centered columns">\
+          <div class="text-center">\
+            <span class="fa-stack fa-5x" style="color: #dfdfdf">\
+              <i class="fa fa-cloud fa-stack-2x"></i>\
+              <i class="fa fa-money fa-stack-1x fa-inverse"></i>\
+            </span>\
+            <div id="showback_no_data" class="hidden">\
+              <br>\
+              <p style="font-size: 18px; color: #999">'+
+              tr("There are no showback records")+
+              '</p>\
+            </div>\
+          </div>\
+        </div>\
+      </div>\
+    </div>\
+    <div id="showback_content" class="hidden">\
+      <div class="row showback_table">\
+        <div class="large-12 columns graph_legend">\
+          <h3 class="subheader">'+tr("Showback")+'</h3>\
+        </div>\
+        <div class="large-6 columns" style="overflow:auto">\
+          <table id="showback_datatable" class="datatable twelve">\
+            <thead>\
+              <tr>\
+                <th>dateint</th>\
+                <th>'+tr("Year")+'</th>\
+                <th>'+tr("Month")+'</th>\
+                <th>'+tr("Date")+'</th>\
+                <th>'+tr("Cost")+'</th>\
+              </tr>\
+            </thead>\
+            <tbody id="tbody_showback_datatable">\
+            </tbody>\
+          </table>\
+          <span class="label secondary radius showback_select_a_row">'+tr("Select a row to get detailed information of the month")+'</span>\
+        </div>\
+        <div class="large-6 columns">\
+          <div class="large-12 columns centered graph" id="showback_graph" style="height: 200px;">\
+          </div>\
+        </div>\
+      </div>\
+      <div class="row showback_vms_table hidden">\
+        <div class="large-12 columns graph_legend">\
+          <h3 class="subheader" id="showback_vms_title">'+tr("VMs")+'</h3>\
+        </div>\
+        <div class="large-12 columns" style="overflow:auto">\
+          <table id="showback_vms_datatable" class="datatable twelve">\
+            <thead>\
+              <tr>\
+                <th>'+tr("ID")+'</th>\
+                <th>'+tr("Name")+'</th>\
+                <th>'+tr("Owner")+'</th>\
+                <th>'+tr("Hours")+'</th>\
+                <th>'+tr("Cost")+'</th>\
+              </tr>\
+            </thead>\
+            <tbody id="tbody_showback_datatable">\
+            </tbody>\
+          </table>\
+        </div>\
+      </div>\
+    </div>');
+
+    if (opt == undefined){
+        opt = {};
+    }
+
+    //--------------------------------------------------------------------------
+    // VM owner: all, group, user
+    //--------------------------------------------------------------------------
+
+    if (opt.fixed_user != undefined || opt.fixed_group != undefined){
+        $("#showback_owner_container", div).hide();
+    } else {
+        $("select#showback_owner", div).change(function(){
+            var value = $(this).val();
+
+            switch (value){
+            case "showback_owner_all":
+                $("#showback_owner_select", div).hide();
+                break;
+
+            case "showback_owner_group":
+                $("#showback_owner_select", div).show();
+                insertSelectOptions("#showback_owner_select", div, "Group");
+                break;
+
+            case "showback_owner_user":
+                $("#showback_owner_select", div).show();
+                insertSelectOptions("#showback_owner_select", div, "User", -1, false,
+                    '<option value="-1">'+tr("<< me >>")+'</option>');
+                break;
+            }
+        });
+    }
+
+    showback_dataTable = $("#showback_datatable",div).dataTable({
+        "bSortClasses" : false,
+        "bDeferRender": true,
+        "iDisplayLength": 6,
+        "sDom": "t<'row collapse'<'small-12 columns'p>>",
+        "aoColumnDefs": [
+            { "bVisible": false, "aTargets": [0,1,2]}
+        ]
+    });
+
+    showback_dataTable.fnSort( [ [0, "desc"] ] );
+
+    showback_vms_dataTable = $("#showback_vms_datatable",div).dataTable({
+        "bSortClasses" : false,
+        "bDeferRender": true
+    });
+
+    showback_dataTable.on("click", "tbody tr", function(){
+        var cells = showback_dataTable.fnGetData(this);
+        var year = cells[1];
+        var month = cells[2];
+
+        showback_vms_dataTable.fnClearTable();
+        showback_vms_dataTable.fnAddData(showback_dataTable.data("vms_per_date")[year][month].VMS)
+
+        $("#showback_vms_title", div).text($months[month-1] + " " + year + " " + tr("VMs"))
+        $(".showback_vms_table", div).show();
+        $(".showback_select_a_row", div).hide();
+    })
+
+    //--------------------------------------------------------------------------
+    // Submit request
+    //--------------------------------------------------------------------------
+
+    $("#showback_submit", div).on("click", function(){
+        var options = {};
+        if (opt.fixed_user != undefined){
+            options.userfilter = opt.fixed_user;
+        } else if (opt.fixed_group != undefined){
+            options.group = opt.fixed_group;
+        } else {
+            var select_val = $("#showback_owner_select .resource_list_select", div).val();
+
+            switch ($("select#showback_owner", div).val()){
+            case "showback_owner_all":
+                break;
+
+            case "showback_owner_group":
+                if(select_val != ""){
+                    options.group = select_val;
+                }
+                break;
+
+            case "showback_owner_user":
+                if(select_val != ""){
+                    options.userfilter = select_val;
+                }
+                break;
+            }
+        }
+
+        OpenNebula.VM.showback({
+    //        timeout: true,
+            success: function(req, response){
+                fillShowback(div, req, response);
+            },
+            error: onError,
+            data: options
+        });
+
+        return false;
+    });
+}
+
+function fillShowback(div, req, response) {
+    $("#showback_no_data", div).hide();
+
+    if(response.SHOWBACK_RECORDS == undefined){
+        $("#showback_placeholder", div).show();
+        $("#showback_content", div).hide();
+
+        $("#showback_no_data", div).show();
+        return false;
+    }
+
+    var vms_per_date = {};
+    $.each(response.SHOWBACK_RECORDS.SHOWBACK, function(index, showback){
+        if (vms_per_date[showback.YEAR] == undefined) {
+            vms_per_date[showback.YEAR] = {}
+        }
+
+        if (vms_per_date[showback.YEAR][showback.MONTH] == undefined) {
+            vms_per_date[showback.YEAR][showback.MONTH] = {
+                "VMS": [],
+                "TOTAL": 0
+            }
+        }
+
+        vms_per_date[showback.YEAR][showback.MONTH].VMS.push([showback.VMID, showback.VMNAME, showback.UNAME, showback.HOURS, showback.COST]);
+        vms_per_date[showback.YEAR][showback.MONTH].TOTAL += parseFloat(showback.COST);
+    });
+
+    var series = []
+    var showback_data = [];
+    $.each(vms_per_date, function(year, months){
+        $.each(months, function(month, value){
+            series.push([(new Date(year, month-1)).getTime(), year, month, $months[month-1] + " " + year, value.TOTAL.toFixed(2)])
+            showback_data.push([(new Date(year, month-1)), value.TOTAL.toFixed(2) ])
+        })
+    })
+
+    showback_dataTable.fnClearTable();
+    if (series.length > 0) {
+        showback_dataTable.data("vms_per_date", vms_per_date)
+        showback_dataTable.fnAddData(series);
+    }
+
+    var showback_plot_series = [];
+    showback_plot_series.push(
+    {
+        label: tr("Showback"),
+        data: showback_data
+    });
+
+    var options = {
+//        colors: [ "#cdebf5", "#2ba6cb", "#6f6f6f" ]
+        colors: [ "#2ba6cb", "#707D85", "#AC5A62" ],
+        legend: {
+            show: false
+        },
+        xaxis : {
+            mode: "time",
+            color: "#efefef",
+            size: 8,
+            minTickSize: [1, "month"]
+        },
+        yaxis : {
+            show: false
+        },
+        series: {
+            bars: {
+                show: true,
+                lineWidth: 0,
+                barWidth: 24 * 60 * 60 * 1000 * 20,
+                fill: true,
+                align: "left"
+            }
+        },
+        grid: {
+            borderWidth: 1,
+            borderColor: "#efefef",
+            hoverable: true
+        }
+        //tooltip: true,
+        //tooltipOpts: {
+        //    content: "%x"
+        //}
+    };
+
+    var showback_plot = $.plot($("#showback_graph", div), showback_plot_series, options);
+
+    $("#showback_placeholder", div).hide();
+    $("#showback_content", div).show();
+}
+
 // div is a jQuery selector
 // The following options can be set:
 //   fixed_user     fix an owner user ID
@@ -4834,39 +5169,44 @@ function accountingGraphs(div, opt){
           </div>\
         </div>\
       </div>\
-      <div class="row acct_table">\
-        <div class="large-12 columns graph_legend">\
-          <h3 class="subheader"><small>'+tr("CPU hours")+'</small></h3>\
-        </div>\
-        <div class="large-12 columns" style="overflow:auto">\
-          <table id="acct_cpu_datatable" class="datatable twelve">\
-            <thead>\
-              <tr>\
-                <th>'+tr("Date")+'</th>\
-              </tr>\
-            </thead>\
-            <tbody id="tbody_acct_cpu_datatable">\
-            </tbody>\
-          </table>\
-        </div>\
-      </div>\
-      <div class="row acct_table">\
-        <div class="large-12 columns graph_legend">\
-          <h3 class="subheader"><small>'+tr("Memory GB hours")+'</small></h3>\
-        </div>\
-        <div class="large-12 columns" style="overflow:auto">\
-          <table id="acct_mem_datatable" class="datatable twelve">\
-            <thead>\
-              <tr>\
-                <th>'+tr("Date")+'</th>\
-              </tr>\
-            </thead>\
-            <tbody id="tbody_acct_mem_datatable">\
-            </tbody>\
-          </table>\
-        </div>\
-      </div>\
-    </div>');
+      <br>' +
+        generateAdvancedSection({
+            title: tr("Accounting Tables"),
+            html_id: "advanced_accounting_tables",
+            content: '<div class="row acct_table">\
+                <div class="large-12 columns graph_legend">\
+                  <h3 class="subheader"><small>'+tr("CPU hours")+'</small></h3>\
+                </div>\
+                <div class="large-12 columns" style="overflow:auto">\
+                  <table id="acct_cpu_datatable" class="datatable twelve">\
+                    <thead>\
+                      <tr>\
+                        <th>'+tr("Date")+'</th>\
+                      </tr>\
+                    </thead>\
+                    <tbody id="tbody_acct_cpu_datatable">\
+                    </tbody>\
+                  </table>\
+                </div>\
+              </div>\
+              <div class="row acct_table">\
+                <div class="large-12 columns graph_legend">\
+                  <h3 class="subheader"><small>'+tr("Memory GB hours")+'</small></h3>\
+                </div>\
+                <div class="large-12 columns" style="overflow:auto">\
+                  <table id="acct_mem_datatable" class="datatable twelve">\
+                    <thead>\
+                      <tr>\
+                        <th>'+tr("Date")+'</th>\
+                      </tr>\
+                    </thead>\
+                    <tbody id="tbody_acct_mem_datatable">\
+                    </tbody>\
+                  </table>\
+                </div>\
+              </div>'
+        }) +
+    '</div>');
 
     if (opt == undefined){
         opt = {};
@@ -5059,10 +5399,16 @@ function fillAccounting(div, req, response, no_table) {
     var start = new Date(options.start_time * 1000);
     start.setUTCHours(0,0,0,0);
 
-    var end = new Date();
+    var end;
+    var now = new Date();
 
-    if(options.end_time != undefined && options.end_time != -1){
-        var end = new Date(options.end_time * 1000)
+    if (options.end_time != undefined && options.end_time != -1) {
+        end = new Date(options.end_time * 1000)
+        if (end > now) {
+            end = now;
+        }
+    } else {
+        end = now;
     }
 
     // granularity of 1 day
@@ -5077,6 +5423,10 @@ function fillAccounting(div, req, response, no_table) {
 
         // day += 1
         tmp_time.setUTCDate( tmp_time.getUTCDate() + 1 );
+    }
+
+    if (tmp_time > now) {
+        times.push(now.getTime());
     }
 
     //--------------------------------------------------------------------------
@@ -5552,12 +5902,52 @@ function retrieveWizardFields(dialog, template_json){
     fields.each(function(){
         var field = $(this);
 
-        if (field.prop('wizard_field_disabled') != true && field.val() != null && field.val().length){
+        if (  field.prop('wizard_field_disabled') != true &&
+              field.val() != null && field.val().length &&
+              (field.attr("type") != "checkbox" || field.prop( "checked" ))
+            ){
+
             var field_name = field.attr('wizard_field');
             template_json[field_name] = field.val();
         }
     });
 }
+
+function fillWizardFields(dialog, template_json){
+    var fields = $('[wizard_field]',dialog);
+
+    fields.each(function(){
+        var field = $(this);
+        var field_name = field.attr('wizard_field');
+        if (template_json[field_name]){
+            switch(field.attr("type")){
+            case "radio":
+                var checked = (field.val() == template_json[field_name]);
+
+                field.prop("checked", checked );
+
+                if(checked){
+                    field.change();
+                }
+                break;
+            case "checkbox":
+                var checked = (field.val().toUpperCase() ==
+                                template_json[field_name].toUpperCase());
+
+                field.prop("checked", checked );
+
+                if(checked){
+                    field.change();
+                }
+                break;
+            default:
+                field.val(escapeDoubleQuotes(htmlDecode(template_json[field_name])));
+                field.change();
+            }
+        }
+    });
+}
+
 
 //==============================================================================
 // Resource tables with "please select" mechanism
@@ -6252,6 +6642,153 @@ function selectImageTableSelect(section, context_id, opts){
     return selectResourceTableSelect(section, context_id, opts);
 }
 
+function generateSecurityGroupTableSelect(context_id){
+
+    var columns = [
+        "",
+        tr("ID"),
+        tr("Owner"),
+        tr("Group"),
+        tr("Name")
+    ];
+
+    var options = {
+        "id_index": 1,
+        "name_index": 4,
+        "select_resource": tr("Please select a security group from the list"),
+        "you_selected": tr("You selected the following security group:"),
+        "select_resource_multiple": tr("Please select one or more security groups from the list"),
+        "you_selected_multiple": tr("You selected the following security groups:")
+    };
+
+    return generateResourceTableSelect(context_id, columns, options);
+}
+
+// opts.bVisible: dataTable bVisible option. If not set, the .yaml visibility will be used
+// opts.filter_fn: boolean function to filter which vnets to show
+// opts.multiple_choice: boolean true to enable multiple element selection
+// opts.read_only: boolean true so user is not asked to select elements
+// opts.fixed_ids: Array of IDs to show. Any other ID will be filtered out. If
+//                 an ID is not returned by the pool, it will be included as a
+//                 blank row
+function setupSecurityGroupTableSelect(section, context_id, opts){
+
+    if(opts == undefined){
+        opts = {};
+    }
+
+    if(opts.bVisible == undefined){
+        // Use the settings in the conf, but removing the checkbox
+        var config = Config.tabTableColumns('secgroups-tab').slice(0);
+        var i = config.indexOf(0);
+
+        if(i != -1){
+            config.splice(i,1);
+        }
+
+        opts.bVisible = config;
+    }
+
+    if(opts.multiple_choice == undefined){
+        opts.multiple_choice = false;
+    }
+
+    var fixed_ids_map_orig = {};
+
+    if(opts.fixed_ids != undefined){
+        $.each(opts.fixed_ids,function(){
+            fixed_ids_map_orig[this] = true;
+        });
+    }
+
+    var options = {
+        "dataTable_options": {
+          "bAutoWidth":false,
+          "iDisplayLength": 4,
+          "sDom" : '<"H">t<"F"p>',
+          "bRetrieve": true,
+          "bSortClasses" : false,
+          "bDeferRender": true,
+          "aoColumnDefs": [
+              { "sWidth": "35px", "aTargets": [0,1] },
+              { "bVisible": true, "aTargets": opts.bVisible},
+              { "bVisible": false, "aTargets": ['_all']}
+            ]
+        },
+
+        "multiple_choice": opts.multiple_choice,
+        "read_only": opts.read_only,
+        "fixed_ids": opts.fixed_ids,
+
+        "id_index": 1,
+        "name_index": 4,
+
+        "update_fn": function(datatable){
+            OpenNebula.SecurityGroup.list({
+                timeout: true,
+                success: function (request, resource_list){
+                    var list_array = [];
+
+                    var fixed_ids_map = $.extend({}, fixed_ids_map_orig);
+
+                    $.each(resource_list,function(){
+                        var add = true;
+
+                        if(opts.filter_fn){
+                            add = opts.filter_fn(this.SECURITY_GROUP);
+                        }
+
+                        if(opts.fixed_ids != undefined){
+                            add = (add && fixed_ids_map[this.SECURITY_GROUP.ID]);
+                        }
+
+                        if(add){
+                            list_array.push(securityGroupElementArray(this));
+
+                            delete fixed_ids_map[this.SECURITY_GROUP.ID];
+                        }
+                    });
+
+                    var n_columns = 5; // SET FOR EACH RESOURCE
+
+                    $.each(fixed_ids_map, function(id,v){
+                        var empty = [];
+
+                        for(var i=0; i<=n_columns; i++){
+                            empty.push("");
+                        }
+
+                        empty[1] = id;  // SET FOR EACH RESOURCE, id_index
+
+                        list_array.push(empty);
+                    });
+
+                    updateView(list_array, datatable);
+                },
+                error: onError
+            });
+        }
+    };
+
+    return setupResourceTableSelect(section, context_id, options);
+}
+
+// Clicks the refresh button
+function refreshSecurityGroupTableSelect(section, context_id){
+    return refreshResourceTableSelect(section, context_id);
+}
+
+// Returns an ID, or an array of IDs for opts.multiple_choice
+function retrieveSecurityGroupTableSelect(section, context_id){
+    return retrieveResourceTableSelect(section, context_id);
+}
+
+// Clears the current selection, and selects the given IDs
+// opts.ids must be a single ID, or an array of IDs for options.multiple_choice
+function selectSecurityGroupTableSelect(section, context_id, opts){
+    return selectResourceTableSelect(section, context_id, opts);
+}
+
 function generateResourceTableSelect(context_id, columns, options){
     if (!options.select_resource){
         options.select_resource = tr("Please select a resource from the list");
@@ -6276,10 +6813,10 @@ function generateResourceTableSelect(context_id, columns, options){
     var html =
     '<div class="row">\
       <div class="large-8 columns">\
-         <button id="refresh_button_'+context_id+'" type="button" class="button small radius secondary"><i class="fa fa-refresh" /></button>\
+         <a id="refresh_button_'+context_id+'" href="#" class="button small radius secondary"><i class="fa fa-refresh" /></a>\
       </div>\
       <div class="large-4 columns">\
-        <input id="'+context_id+'_search" class="search" type="text" placeholder="'+tr("Search")+'"/>\
+        <input id="'+context_id+'_search" class="search" type="search" placeholder="'+tr("Search")+'"/>\
       </div>\
     </div>\
     <div class="row">\
@@ -6359,6 +6896,7 @@ function setupResourceTableSelect(section, context_id, options) {
 
     section.on('click', '#refresh_button_'+context_id, function(){
         options.update_fn($('table[id=datatable_'+context_id+']', section).dataTable());
+        return false;
     });
 
     $('#'+context_id+'_search', section).keyup(function(){
@@ -6398,15 +6936,21 @@ function setupResourceTableSelect(section, context_id, options) {
             if( ids[row_id] ){
                 delete ids[row_id];
 
-                $("td", row).removeClass('markrowchecked');
-                $('input.check_item', row).removeAttr('checked');
+                // Happens if row is not yet rendered (i.e. higher unvisited page)
+                if (row != undefined){
+                    $("td", row).removeClass('markrowchecked');
+                    $('input.check_item', row).removeAttr('checked');
+                }
 
                 $('#selected_ids_row_'+context_id+' span[row_id="'+row_id+'"]', section).remove();
             } else {
                 ids[row_id] = true;
 
-                $("td", row).addClass('markrowchecked');
-                $('input.check_item', row).attr('checked','checked');
+                // Happens if row is not yet rendered (i.e. higher unvisited page)
+                if (row != undefined){
+                    $("td", row).addClass('markrowchecked');
+                    $('input.check_item', row).attr('checked','checked');
+                }
 
                 $('#selected_ids_row_'+context_id, section).append('<span row_id="'+row_id+'" class="radius label">'+row_name+' <span class="fa fa-times blue"></span></span> ');
 
@@ -6629,6 +7173,7 @@ function selectResourceTableSelect(section, context_id, opts){
     }
 }
 
+
 //==============================================================================
 // VM & Service user inputs
 //==============================================================================
@@ -6794,6 +7339,217 @@ function generateAdvancedSection(opts){
     '</div>';
 }
 
+//==============================================================================
+// Security Groups
+//==============================================================================
+
+function icmp_to_st(icmp_type){
+    switch( icmp_type ){
+        case "":    return tr("All");
+        case "0":   return "0: Echo Reply";
+        case "0":   return "0: Echo Reply";
+        case "3":   return "3: Destination Unreachable";
+        case "4":   return "4: Source Quench";
+        case "5":   return "5: Redirect";
+        case "6":   return "6: Alternate Host Address";
+        case "8":   return "8: Echo";
+        case "9":   return "9: Router Advertisement";
+        case "10":  return "10: Router Solicitation";
+        case "11":  return "11: Time Exceeded";
+        case "12":  return "12: Parameter Problem";
+        case "13":  return "13: Timestamp";
+        case "14":  return "14: Timestamp Reply";
+        case "15":  return "15: Information Request";
+        case "16":  return "16: Information Reply";
+        case "17":  return "17: Address Mask Request";
+        case "18":  return "18: Address Mask Reply";
+        case "30":  return "30: Traceroute";
+        case "31":  return "31: Datagram Conversion Error";
+        case "32":  return "32: Mobile Host Redirect";
+        case "33":  return "33: IPv6 Where-Are-You";
+        case "34":  return "34: IPv6 I-Am-Here";
+        case "35":  return "35: Mobile Registration Request";
+        case "36":  return "36: Mobile Registration Reply";
+        case "37":  return "37: Domain Name Request";
+        case "38":  return "38: Domain Name Reply";
+        case "39":  return "39: SKIP";
+        case "40":  return "40: Photuris";
+        case "41":  return "41: ICMP messages utilized by experimental mobility protocols such as Seamoby";
+        case "253": return "253: RFC3692-style Experiment 1";
+        case "254": return "254: RFC3692-style Experiment 2";
+        default:  return "" + icmp_type;
+    }
+}
+
+/*
+Returns an object with the human readable attributes of the rule. List of attributes:
+PROTOCOL
+RULE_TYPE
+ICMP_TYPE
+RANGE
+NETWORK
+*/
+function sg_rule_to_st(rule){
+    var text = {};
+
+    if(rule.PROTOCOL != undefined){
+        switch(rule.PROTOCOL.toUpperCase()){
+        case "TCP":
+            text["PROTOCOL"] = tr("TCP");
+            break;
+        case "UDP":
+            text["PROTOCOL"] = tr("UDP");
+            break;
+        case "ICMP":
+            text["PROTOCOL"] = tr("ICMP");
+            break;
+        case "IPSEC":
+            text["PROTOCOL"] = tr("IPsec");
+            break;
+        case "ALL":
+            text["PROTOCOL"] = tr("All");
+            break;
+        default:
+            text["PROTOCOL"] = "";
+        }
+    } else {
+        text["PROTOCOL"] = "";
+    }
+
+    if(rule.RULE_TYPE != undefined){
+        switch(rule.RULE_TYPE.toUpperCase()){
+        case "OUTBOUND":
+            text["RULE_TYPE"] = tr("Outbound");
+            break;
+        case "INBOUND":
+            text["RULE_TYPE"] = tr("Inbound");
+            break;
+        default:
+            text["RULE_TYPE"] = "";
+        }
+    } else {
+        text["RULE_TYPE"] = "";
+    }
+
+    if(rule.ICMP_TYPE != undefined){
+        text["ICMP_TYPE"] = icmp_to_st(rule.ICMP_TYPE);
+    } else {
+        text["ICMP_TYPE"] = "";
+    }
+
+    if(rule.RANGE != undefined && rule.RANGE != ""){
+        text["RANGE"] = rule.RANGE;
+    } else {
+        text["RANGE"] = tr("All");
+    } 
+
+    var network = "";
+
+    if(rule.NETWORK_ID != undefined && rule.NETWORK_ID != ""){
+        network += (tr("Virtual Network") + " " + rule.NETWORK_ID);
+    }
+
+    if(rule.SIZE != undefined && rule.SIZE != ""){
+        if(network != ""){
+            network += ":<br>";
+        }
+ 
+        if(rule.IP != undefined && rule.IP != ""){
+            network += tr("Start") + ": " + rule.IP + ", ";
+        } else if(rule.MAC != undefined && rule.MAC != ""){
+            network += tr("Start") + ": " + rule.MAC + ", ";
+        }
+
+        network += tr("Size") + ": " + rule.SIZE;
+    }
+
+    if(network == ""){
+        network = tr("Any");
+    }
+
+    text["NETWORK"] = network;
+
+    return text;
+}
+
+//==============================================================================
+//==============================================================================
+
+/*
+    Insert a select input with an optionally text input for custom values
+
+    @param opts.id key of the OpenNebula Template
+    @param opts.label name to be shown as label
+    @param opts.tooltip 
+    @param opts.options array of options for the select
+    @param opts.custom boolean, provide a text input for a custom value (default: false)
+    @return {string}
+*/
+function generateValueSelect(opts){
+    var str = '<div class="custom_select_container row collapse">'+
+            '<label for="' + opts.id + '_select">'+ opts.label +
+              '<span data-tooltip class="has-tip" title="' + opts.tooltip + '"><i class="fa fa-question-circle"></i></span>' +
+            '</label>';
+
+    str += '<div class="custom_select_input_div vm_param columns hidden">';
+    str += '<input id="' + opts.id + '" type="text" class="custom_select_input"/>';
+    str += '</div>';
+
+    str += '<div class="custom_select_div large-12 columns">'+ 
+            '<select name="' + opts.id + '_select" class="custom_select">';
+
+    str += '<option id="" name="" value=""></option>';
+
+    $.each(opts.options, function(index, option){
+        str += '<option value="' + option + '">' + option + '</option>';
+    });
+
+    if (opts.custom) {
+        str += '<option class="custom_option" value="custom">...</option>';
+
+    }
+
+    str += '</select>';
+    str += '</div>';
+
+    $(document).on("change", ".custom_select_input", function(){
+        var select = $(".custom_select", $(this).closest(".custom_select_container"));
+        select.val($(this).val());
+        if (select.val() == null) {
+            select.val("custom");
+        }
+        select.change();
+    });
+
+    $(document).on("change", ".custom_select", function(){
+        var container = $(this).closest(".custom_select_container");
+        if ($(this).val() == "custom") {
+            $(this).addClass("postfix");
+            $(".custom_select_input", container).focus();
+
+            $(".custom_select_input_div", container).show();
+            $(".custom_select_input_div", container).addClass("large-10");
+            $(".custom_select_div", container).addClass("large-2");
+            $(".custom_select_div", container).removeClass("large-12");
+        } else {
+            $(this).removeClass("postfix");
+            $(".custom_select_input", container).val($(this).val());
+
+            $(".custom_select_input_div", container).hide();
+            $(".custom_select_input_div", container).removeClass("large-10");
+            $(".custom_select_div", container).removeClass("large-2");
+            $(".custom_select_div", container).addClass("large-12");
+        }
+    });
+
+    str += '</div>';
+
+    return str;
+}
+
+//==============================================================================
+// Internet Explorer
+//==============================================================================
 
 function getInternetExplorerVersion(){
 // Returns the version of Internet Explorer or a -1
@@ -6868,3 +7624,24 @@ function ip_str(vm, divider){
 
     return ip;
 };
+
+// returns true if the vnc button should be enabled
+function enableVnc(vm){
+    var graphics = vm.TEMPLATE.GRAPHICS;
+    var state = OpenNebula.Helper.resource_state("vm_lcm",vm.LCM_STATE);
+
+    return (graphics &&
+        graphics.TYPE &&
+        graphics.TYPE.toLowerCase() == "vnc"  &&
+        $.inArray(state, VNCstates)!=-1);
+}
+
+function enableSPICE(vm){
+    var graphics = vm.TEMPLATE.GRAPHICS;
+    var state = OpenNebula.Helper.resource_state("vm_lcm",vm.LCM_STATE);
+
+    return (graphics &&
+        graphics.TYPE &&
+        graphics.TYPE.toLowerCase() == "spice" &&
+        $.inArray(state, VNCstates)!=-1);
+}

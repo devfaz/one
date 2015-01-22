@@ -344,6 +344,7 @@ var OpenNebula = {
                 type: "POST",
                 dataType: "json",
                 data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
                 success: function(response){
                     OpenNebula.Helper.clear_cache(cache_name);
 
@@ -576,6 +577,7 @@ var OpenNebula = {
             $.ajax({
                 url: req_path + "/" + id + "/action",
                 type: "POST",
+                contentType: "application/json; charset=utf-8",
                 data: JSON.stringify(action),
                 success: function(){
                     OpenNebula.Helper.clear_cache(cache_name);
@@ -639,6 +641,31 @@ var OpenNebula = {
                 }
             });
         },
+
+        "showback": function(params, resource, path){
+            var callback = params.success;
+            var callback_error = params.error;
+            var data = params.data;
+
+            var method = "showback";
+            var request = OpenNebula.Helper.request(resource,method, data);
+
+            var url = path ? path : resource.toLowerCase() + "/showback";
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                data: data,
+                dataType: "json",
+                success: function(response){
+                    return callback ? callback(request, response) : null;
+                },
+                error: function(response){
+                    return callback_error ?
+                        callback_error(request, OpenNebula.Error(response)) : null;
+                }
+            });
+        }
     },
 
     "Auth": {
@@ -1045,6 +1072,9 @@ var OpenNebula = {
         "accounting": function(params){
             OpenNebula.Action.accounting(params,OpenNebula.VM.resource);
         },
+        "showback": function(params){
+            OpenNebula.Action.showback(params,OpenNebula.VM.resource);
+        }
     },
 
     "Group": {
@@ -1498,6 +1528,58 @@ var OpenNebula = {
         }
     },
 
+    "SecurityGroup" : {
+        "resource" : "SECURITY_GROUP",
+
+        "create" : function(params){
+            OpenNebula.Action.create(params,OpenNebula.SecurityGroup.resource);
+        },
+        "del" : function(params){
+            OpenNebula.Action.del(params,OpenNebula.SecurityGroup.resource);
+        },
+        "list" : function(params){
+            OpenNebula.Action.list(params,OpenNebula.SecurityGroup.resource);
+        },
+        "show" : function(params){
+            OpenNebula.Action.show(params,OpenNebula.SecurityGroup.resource);
+        },
+        "chown" : function(params){
+            OpenNebula.Action.chown(params,OpenNebula.SecurityGroup.resource);
+        },
+        "chgrp" : function(params){
+            OpenNebula.Action.chgrp(params,OpenNebula.SecurityGroup.resource);
+        },
+        "chmod" : function(params){
+            var action_obj = params.data.extra_param;
+            OpenNebula.Action.simple_action(params,
+                                            OpenNebula.SecurityGroup.resource,
+                                            "chmod",
+                                            action_obj);
+        },
+        "update": function(params){
+            var action_obj = {"template_raw" : params.data.extra_param };
+            OpenNebula.Action.simple_action(params,
+                                            OpenNebula.SecurityGroup.resource,
+                                            "update",
+                                            action_obj);
+        },
+        "fetch_template" : function(params){
+            OpenNebula.Action.show(params,OpenNebula.SecurityGroup.resource,"template");
+        },
+        "clone" : function(params) {
+            var name = params.data.extra_param ? params.data.extra_param : "";
+            var action_obj = { "name" : name };
+            OpenNebula.Action.simple_action(params,OpenNebula.SecurityGroup.resource, "clone", action_obj);
+        },
+        "rename" : function(params){
+            var action_obj = params.data.extra_param;
+            OpenNebula.Action.simple_action(params,
+                                            OpenNebula.SecurityGroup.resource,
+                                            "rename",
+                                            action_obj);
+        }
+    },
+
     "Marketplace" : {
         "resource" : "MARKETPLACE",
 
@@ -1785,6 +1867,7 @@ var OpenNebula = {
                 url: OpenNebula.Role.path + "/" + params.data.id,
                 type: "PUT",
                 dataType: "json",
+                contentType: "application/json; charset=utf-8",
                 data: JSON.stringify(params.data.extra_param),
                 success: function(response){
                     return params.success ? params.success(request, response) : null;

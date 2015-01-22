@@ -31,6 +31,7 @@ Config = {
       var enabled = config['view']['enabled_tabs'][tab_name];
       return enabled;
     },
+
     "isTabActionEnabled": function(tab_name, action_name, panel_name){
       var enabled;
       if (panel_name) {
@@ -46,6 +47,14 @@ Config = {
       if (config['view']['tabs'][tab_name]) {
         var enabled = config['view']['tabs'][tab_name]['panel_tabs'][panel_tab_name];
         return enabled;
+      } else {
+        return false;
+      }
+    },
+
+    "isFeatureEnabled": function(feature_name){
+      if (config['view']['features'] && config['view']['features'][feature_name]) {
+        return true;
       } else {
         return false;
       }
@@ -97,6 +106,15 @@ Config = {
           }
         }
       },
+      "create_vm": {
+        "isEnabled": function(widget) {
+          if (config['view']['tabs']['provision-tab'] && config['view']['tabs']['provision-tab']["create_vm"]){
+            return config['view']['tabs']['provision-tab']['create_vm'][widget];
+          } else {
+            return false;
+          }
+        }
+      },
       "logo": (config['view']["provision_logo"] || "images/one_small_logo.png")
     }
 }
@@ -128,6 +146,20 @@ var config_tab_content =
                 <tbody>\
                 </tbody>\
             </table>\
+        </div>\
+        <div class="large-5 columns">' +
+         '<table class="dataTable extended_table" cellpadding="0" cellspacing="0" border="0">\
+             <thead>\
+                 <tr>\
+                     <th>' + tr("Public SSH Key") + '</th>\
+                     <th>\
+                         <a class="config_ssh_public_key_edit right" href="#"><i class="fa fa-pencil-square-o"></i></a>\
+                     </th>\
+                 </tr>\
+             </thead>\
+          </table>\
+         <textarea rows="6" type="text" id="config_ssh_public_key_textarea" name="ssh_public_key" class="hidden"/>\
+         <p id="config_ssh_public_key_text" name="ssh_public_key"></p>\
         </div>\
       </div>\
       <div class="row">\
@@ -294,6 +326,38 @@ function setupConfigDialog() {
 
     dialog.addClass("reveal-modal large max-height").attr("data-reveal", "");
 
+    $(".config_ssh_public_key_edit", '#config_dialog').on("click", function(){
+        $("#config_ssh_public_key_text", '#config_dialog').hide();
+        $("#config_ssh_public_key_textarea", '#config_dialog').show().focus();
+    });
+
+    $("#config_ssh_public_key_textarea", '#config_dialog').on("change", function(){
+        var user_id = getSelectedNodes(dataTable_users)[0];
+
+        OpenNebula.User.show({
+            data : {
+                id: -1
+            },
+            success: function(request,user_json){
+              var template = user_json.USER.TEMPLATE;
+
+              template["SSH_PUBLIC_KEY"] = $("#config_ssh_public_key_textarea", '#config_dialog').val();
+
+              template_str = "";
+              $.each(template,function(key,value){
+                template_str += (key + '=' + '"' + value + '"\n');
+              });
+
+              Sunstone.runAction("UserSettings.update_template", -1, template_str);
+            }
+        })
+    });
+
+    $("#config_ssh_public_key_textarea", '#config_dialog').on("focusout", function(){
+      $("#config_ssh_public_key_text", '#config_dialog').show();
+      $("#config_ssh_public_key_textarea", '#config_dialog').hide();
+    });
+
     setupTips(dialog);
 
     if (config['user_config']["vnc_wss"] == "yes"){
@@ -361,15 +425,6 @@ function setupConfigDialog() {
     });
 }
 
-function tr(str){
-    var tmp = locale[str];
-    if ( tmp == null || tmp == "" ) {
-        //console.debug("Missing translation: "+str);
-        tmp = str;
-    }
-    return tmp;
-};
-
 function updateUserConfigInfo(request,user_json) {
     var info = user_json.USER;
 
@@ -415,11 +470,22 @@ function updateUserConfigInfo(request,user_json) {
         <td class="value_td" colspan="2"><button id="update_password" type="button" class="button tiny radius" >' + tr("Update password") + '</button></td>\
     </tr>')
 
+    var ssh_key;
+    if (info.TEMPLATE.SSH_PUBLIC_KEY) {
+        ssh_key = info.TEMPLATE.SSH_PUBLIC_KEY;
+        delete info.TEMPLATE.SSH_PUBLIC_KEY;
+        $("#config_ssh_public_key_text", "#config_dialog").text(ssh_key);
+        $("#config_ssh_public_key_textarea", "#config_dialog").val(ssh_key);
+    } else {
+      $("#config_ssh_public_key_text", "#config_dialog").text(tr("You can provide a SSH Key for this User clicking on the edit button"))
+    };
+
     $("#setting_user_template").html(
         insert_extended_template_table(info.TEMPLATE,
                                           "UserSettings",
                                           "-1",
-                                          tr("Custom Attributes"))
+                                          tr("Custom Attributes"),
+                                          {SSH_PUBLIC_KEY: ssh_key})
     )
 
     $("#div_edit_chg_group_link").die();

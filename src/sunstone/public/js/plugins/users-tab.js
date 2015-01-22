@@ -399,7 +399,7 @@ var users_tab = {
     buttons: user_buttons,
     tabClass: 'subTab',
     parentTab: 'system-tab',
-    search_input: ' <input id="user_search" type="text" placeholder="'+tr("Search")+'" />',
+    search_input: ' <input id="user_search" type="search" placeholder="'+tr("Search")+'" />',
     list_header: '<i class="fa fa-fw fa-user"></i>&emsp;'+tr("Users"),
     info_header: '<i class="fa fa-fw fa-user"></i>&emsp;'+tr("User"),
     subheader: '<span>\
@@ -439,46 +439,32 @@ function userElements(){
 function userElementArray(user_json){
     var user = user_json.USER;
 
-    var vms = "-";
-    var memory = "-";
-    var cpu = "-";
+    var vms    = '<span class="progress-text right" style="font-size: 12px">-</span>';
+    var memory = '<span class="progress-text right" style="font-size: 12px">-</span>';
+    var cpu    = '<span class="progress-text right" style="font-size: 12px">-</span>';
+
+    initEmptyQuotas(user);
 
     if (!$.isEmptyObject(user.VM_QUOTA)){
 
-        var vms = quotaBar(
+        vms = quotaBar(
             user.VM_QUOTA.VM.VMS_USED,
             user.VM_QUOTA.VM.VMS,
             default_user_quotas.VM_QUOTA.VM.VMS);
 
-        var memory = quotaBarMB(
+        memory = quotaBarMB(
             user.VM_QUOTA.VM.MEMORY_USED,
             user.VM_QUOTA.VM.MEMORY,
             default_user_quotas.VM_QUOTA.VM.MEMORY);
 
-        var cpu = quotaBarFloat(
+        cpu = quotaBarFloat(
             user.VM_QUOTA.VM.CPU_USED,
             user.VM_QUOTA.VM.CPU,
             default_user_quotas.VM_QUOTA.VM.CPU);
-    } else {
-
-        var vms = quotaBar(0, 0, null);
-        var memory = quotaBarMB(0, 0, null);
-        var cpu = quotaBarFloat(0, 0, null);
-
     }
 
     // Build hidden user template
-    var hidden_template = "";
-    for (var key in user.TEMPLATE){
-        switch (key){
-            // Don't copy unnecesary keys
-            case "SSH_PUBLIC_KEY":
-            case "TOKEN_PASSWORD":
-                break;
-            default:
-                hidden_template = hidden_template + key + "=" + user.TEMPLATE[key] + "\n";
-        }
-    }
+    var hidden_template = convert_template_to_string(user);
 
     return [
         '<input class="check_item" type="checkbox" id="user_'+user.ID+'" name="selected_items" value="'+user.ID+'"/>',
@@ -537,6 +523,12 @@ function updateUsersView(request,users_list,quotas_list){
 function updateUserInfo(request,user){
     var info = user.USER;
 
+    var ssh_key;
+    if (info.TEMPLATE.SSH_PUBLIC_KEY) {
+        ssh_key = info.TEMPLATE.SSH_PUBLIC_KEY;
+        delete info.TEMPLATE.SSH_PUBLIC_KEY;
+    };
+
     $(".resource-info-header", $("#users-tab")).html(info.NAME);
 
     var info_tab = {
@@ -577,14 +569,27 @@ function updateUserInfo(request,user){
          </table>\
        </div>\
        <div class="large-6 columns">' +
-       '</div>\
+        '<table class="dataTable extended_table" cellpadding="0" cellspacing="0" border="0">\
+            <thead>\
+                <tr>\
+                    <th>' + tr("Public SSH Key") + '</th>\
+                    <th>\
+                        <a class="user_ssh_public_key_edit right" href="#"><i class="fa fa-pencil-square-o"></i></a>\
+                    </th>\
+                </tr>\
+            </thead>\
+         </table>\
+        <textarea rows="6" type="text" id="user_ssh_public_key_textarea" name="ssh_public_key" class="hidden"/>\
+        <p id="user_ssh_public_key_text" name="ssh_public_key">'+tr("You can provide a SSH Key for this User clicking on the edit button")+'</p>\
+       </div>\
      </div>\
      <div class="row">\
           <div class="large-9 columns">'+
                insert_extended_template_table(info.TEMPLATE,
                                               "User",
                                               info.ID,
-                                              tr("Attributes")) +
+                                              tr("Attributes"),
+                                              {SSH_PUBLIC_KEY: ssh_key}) +
        '</div>\
      </div>'
     };
@@ -607,11 +612,29 @@ function updateUserInfo(request,user){
         content: '<div id="user_accounting"></div>'
     };
 
+
     Sunstone.updateInfoPanelTab("user_info_panel","user_info_tab",info_tab);
     Sunstone.updateInfoPanelTab("user_info_panel","user_quotas_tab",quotas_tab);
-    Sunstone.updateInfoPanelTab("user_info_panel","user_accouning_tab",accounting_tab);
+    Sunstone.updateInfoPanelTab("user_info_panel","user_accounting_tab",accounting_tab);
+
+    if (Config.isFeatureEnabled("showback")) {
+        var showback_tab = {
+            title: tr("Showback"),
+            icon: "fa-money",
+            content: '<div id="user_showback"></div>'
+        };
+
+        Sunstone.updateInfoPanelTab("user_info_panel","user_showback_tab",showback_tab);
+    }
+    
     //Sunstone.updateInfoPanelTab("user_info_panel","user_acct_tab",acct_tab);
     Sunstone.popUpInfoPanel("user_info_panel", 'users-tab');
+
+    if (Config.isFeatureEnabled("showback")) {
+        showbackGraphs(
+            $("#user_showback","#user_info_panel"),
+            { fixed_user: info.ID });
+    }
 
     accountingGraphs(
         $("#user_accounting","#user_info_panel"),
@@ -622,6 +645,43 @@ function updateUserInfo(request,user){
         "#user_info_panel",
         Config.isTabActionEnabled("users-tab", "User.quotas_dialog"),
         "User");
+
+    $(".user_ssh_public_key_edit", "#user_info_panel").on("click", function(){
+        $("#user_ssh_public_key_text", "#user_info_panel").hide();
+        $("#user_ssh_public_key_textarea", "#user_info_panel").show().focus();
+    });
+
+    $("#user_ssh_public_key_textarea", "#user_info_panel").on("change", function(){
+        var user_id = getSelectedNodes(dataTable_users)[0];
+
+        OpenNebula.User.show({
+            data : {
+                id: user_id
+            },
+            success: function(request,user_json){
+              var template = user_json.USER.TEMPLATE;
+
+              template["SSH_PUBLIC_KEY"] = $("#user_ssh_public_key_textarea", "#user_info_panel").val();
+
+              template_str = "";
+              $.each(template,function(key,value){
+                template_str += (key + '=' + '"' + value + '"\n');
+              });
+
+              Sunstone.runAction("User.update_template", user_id, template_str);
+            }
+        })
+    });
+
+    $("#user_ssh_public_key_textarea", "#user_info_panel").on("focusout", function(){
+      $("#user_ssh_public_key_text", "#user_info_panel").show();
+      $("#user_ssh_public_key_textarea", "#user_info_panel").hide();
+    });
+
+    if (ssh_key) {
+        $("#user_ssh_public_key_text", "#user_info_panel").text(ssh_key);
+        $("#user_ssh_public_key_textarea", "#user_info_panel").val(ssh_key);
+    }
 };
 
 // Used also from groups-tabs.js
@@ -816,7 +876,7 @@ $(document).ready(function(){
       });
 
       $('#user_search').keyup(function(){
-        dataTable_users.fnFilter( $(this).val() );
+        dataTable_users.fnFilter( $(this).val(), null, true, false );
       })
 
       dataTable_users.on('draw', function(){

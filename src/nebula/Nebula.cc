@@ -345,6 +345,7 @@ void Nebula::start(bool bootstrap_only)
             rc += DocumentPool::bootstrap(db);
             rc += UserQuotas::bootstrap(db);
             rc += GroupQuotas::bootstrap(db);
+            rc += SecurityGroupPool::bootstrap(db);
 
             // Create the system tables only if bootstrap went well
             if (rc == 0)
@@ -557,6 +558,8 @@ void Nebula::start(bool bootstrap_only)
 
         default_user_quota.select();
         default_group_quota.select();
+
+        secgrouppool = new SecurityGroupPool(db);
     }
     catch (exception&)
     {

@@ -20,13 +20,14 @@ var VM_HISTORY_LENGTH = 40;
 
 // Only one vnc request is allowed
 var vnc_lock = false;
+var spice_lock = false;
 
 function loadVNC(){
     // Load supporting scripts
         "use strict";
     Util.load_scripts(["webutil.js", "base64.js", "websock.js", "des.js",
                        "keysymdef.js", "keyboard.js", "input.js", "display.js",
-                       "jsunzip.js", "rfb.js"]);
+                       "jsunzip.js", "rfb.js", "keysym.js"]);
 }
 loadVNC();
 
@@ -193,6 +194,7 @@ var $create_vm_dialog;
 var $deploy_vm_dialog;
 var $migrate_vm_dialog;
 var $vnc_dialog;
+var $spice_dialog;
 var rfb;
 
 var vm_actions = {
@@ -538,6 +540,13 @@ var vm_actions = {
         }
     },
 
+    "VM.startspice" : {
+        type: "custom",
+        call: function(){
+          popUpSPICE();
+        }
+    },
+
     "VM.startvnc_action" : {
         type: "single",
         call: OpenNebula.VM.startvnc,
@@ -545,6 +554,17 @@ var vm_actions = {
         error: function(req, resp){
             onError(req, resp);
             vnc_lock = false;
+        },
+        notify: true
+    },
+
+    "VM.startspice_action" : {
+        type: "single",
+        call: OpenNebula.VM.startvnc,
+        callback: spiceCallback,
+        error: function(req, resp){
+            onError(req, resp);
+            spice_lock = false;
         },
         notify: true
     },
@@ -903,6 +923,12 @@ var vm_buttons = {
         text: '<i class="fa fa-desktop" style="color: rgb(111, 111, 111)"/> '+tr("VNC"),
         custom_classes: "only-right-info vnc-right-info",
         tip: tr("VNC")
+    },
+    "VM.startspice" : {
+        type: "action",
+        text: '<i class="fa fa-desktop" style="color: rgb(111, 111, 111)"/> '+tr("SPICE"),
+        custom_classes: "only-right-info spice-right-info",
+        tip: tr("SPICE")
     }
 }
 
@@ -916,7 +942,7 @@ var vms_tab = {
     buttons: vm_buttons,
     tabClass: 'subTab',
     parentTab: 'vresources-tab',
-    search_input: '<input id="vms_search" type="text" placeholder="'+tr("Search")+'" />',
+    search_input: '<input id="vms_search" type="search" placeholder="'+tr("Search")+'" />',
     list_header: '<i class="fa fa-fw fa-th"></i>&emsp;'+tr("Virtual Machines"),
     info_header: '<i class="fa fa-fw fa-th"></i>&emsp;'+tr("VM"),
     subheader: '<span class="total_vms"/> <small>'+tr("TOTAL")+'</small>&emsp;\
@@ -938,7 +964,8 @@ var vms_tab = {
             <th>'+tr("Host")+'</th>\
             <th>'+tr("IPs")+'</th>\
             <th>'+tr("Start Time")+'</th>\
-            <th>'+tr("VNC")+'</th>\
+            <th>'+tr("")+'</th>\
+            <th>'+tr("Hidden Template")+'</th>\
           </tr>\
         </thead>\
         <tbody id="tbodyvmachines">\
@@ -1006,6 +1033,8 @@ function vMachineElementArray(vm_json){
         state = OpenNebula.Helper.resource_state("vm_lcm",vm.LCM_STATE);
     };
 
+    // Build hidden user template
+    var hidden_template = convert_template_to_string(vm);
 
     return [
         '<input class="check_item" type="checkbox" id="vm_'+vm.ID+'" name="selected_items" value="'+vm.ID+'"/>',
@@ -1019,7 +1048,8 @@ function vMachineElementArray(vm_json){
         hostname,
         ip_str(vm),
         str_start_time(vm),
-        vncIcon(vm)
+        vncIcon(vm),
+        hidden_template
     ];
 };
 
@@ -1450,6 +1480,52 @@ function updateVMInfo(request,vm){
 
     // Enable / disable vnc button
     $(".vnc-right-info").prop("disabled", !enableVnc(vm_info));
+
+    if (!enableVnc(vm_info)) {
+        $(".vnc-right-info").hide();
+    } else {
+        $(".vnc-right-info").show();
+    }
+
+    if (!enableSPICE(vm_info)) {
+        $(".spice-right-info").hide();
+    } else {
+        $(".spice-right-info").show();
+    }
+
+    // Setup and fill nics
+    var nic_dt_data = $("#vms-tab").data("nic_dt_data");
+
+    var nics_table = $("#tab_network_form .nics_table", $info_panel).DataTable({
+        "bDeferRender": true,
+        "data": nic_dt_data,
+        "columns": [
+            {
+                "class":          'open-control',
+                "orderable":      false,
+                "data":           null,
+                "defaultContent": '<span class="fa fa-fw fa-chevron-down"></span>'
+            },
+            { "data": "NIC_ID" },
+            { "data": "NETWORK" },
+            { "data": "IP" },
+            { "data": "MAC" },
+            { "data": "IP6_ULA" },
+            { "data": "IP6_GLOBAL" },
+            { "data": "ACTIONS" }
+        ],
+
+        "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
+
+            if (aData.SECURITY_GROUP_RULES == undefined ||
+                aData.SECURITY_GROUP_RULES.length == 0){
+
+                $("td.open-control", nRow).html("").removeClass('open-control');
+            }
+        }
+    });
+
+    $("#tab_network_form .nics_table", $info_panel).dataTable().fnSort( [ [1,'asc'] ] );
 }
 
 function updateVMDisksInfo(request,vm){
@@ -2032,9 +2108,10 @@ function printNics(vm_info){
    var html ='<form id="tab_network_form" vmid="'+vm_info.ID+'" >\
       <div class="row">\
       <div class="large-12 columns">\
-         <table class="info_table dataTable extended_table">\
+         <table class="nics_table no-hover info_table dataTable extended_table">\
            <thead>\
              <tr>\
+                <th></th>\
                 <th>'+tr("ID")+'</th>\
                 <th>'+tr("Network")+'</th>\
                 <th>'+tr("IP")+'</th>\
@@ -2058,8 +2135,11 @@ function printNics(vm_info){
     html += '</th>\
               </tr>\
            </thead>\
-           <tbody>';
-
+           <tbody>\
+           </tbody>\
+          </table>\
+        </div>\
+      </div>';
 
     var nics = []
 
@@ -2109,6 +2189,7 @@ function printNics(vm_info){
           </tr>';
     }
     else {
+        var nic_dt_data = [];
 
         for (var i = 0; i < nics.length; i++){
             var nic = nics[i];
@@ -2123,7 +2204,7 @@ function printNics(vm_info){
                ( //
                 nic.ATTACH == "YES")
                ) {
-              actions = 'attach/detach in progress'
+              actions = tr("attach/detach in progress")
             }
             else {
               actions = '';
@@ -2135,24 +2216,37 @@ function printNics(vm_info){
               }
             }
 
-            html += '\
-              <tr nic_id="'+(nic.NIC_ID)+'">\
-                <td>' + nic.NIC_ID + '</td>\
-                <td>' + nic.NETWORK + '</td>\
-                <td>' + (nic.IP ? nic.IP : "--") + '</td>\
-                <td>' + nic.MAC + '</td>\
-                <td>' + (nic.IP6_ULA ? nic.IP6_ULA : "--") +'</td>\
-                <td>' + (nic.IP6_GLOBAL ? nic.IP6_GLOBAL : "--") +'</td>\
-                <td>' + actions + '</td>\
-            </tr>';
-        }
-    }
+            var secgroups = [];
 
-    html += '\
-            </tbody>\
-          </table>\
-        </div>\
-        </div>';
+            var nic_secgroups = {};
+            if (nic.SECURITY_GROUPS != undefined){
+                $.each(nic.SECURITY_GROUPS.split(","), function(){
+                    nic_secgroups[this] = true;
+                });
+            }
+
+            if (vm_info.TEMPLATE.SECURITY_GROUP_RULE != undefined){
+                $.each(vm_info.TEMPLATE.SECURITY_GROUP_RULE, function(){
+                    if ( nic_secgroups[this.SECURITY_GROUP_ID] ){
+                        secgroups.push(this);
+                    }
+                });
+            }
+
+            nic_dt_data.push({
+                NIC_ID : nic.NIC_ID,
+                NETWORK : nic.NETWORK,
+                IP : (nic.IP ? nic.IP : "--"),
+                MAC : nic.MAC,
+                IP6_ULA : (nic.IP6_ULA ? nic.IP6_ULA : "--"),
+                IP6_GLOBAL : (nic.IP6_GLOBAL ? nic.IP6_GLOBAL : "--"),
+                ACTIONS : actions,
+                SECURITY_GROUP_RULES : secgroups
+            });
+        }
+
+        $("#vms-tab").data("nic_dt_data", nic_dt_data);
+    }
 
   if (!isHybrid)
   {
@@ -2296,6 +2390,53 @@ function setup_vm_network_tab(){
           return false;
       });
     }
+
+    // Add event listener for opening and closing each NIC row details
+    $('#vms-tab').on('click', '#tab_network_form .nics_table td.open-control', function () {
+        var row = $(this).closest('table').DataTable().row( $(this).closest('tr') );
+ 
+        if ( row.child.isShown() ) {
+            row.child.hide();
+            $(this).children("span").addClass('fa-chevron-down');
+            $(this).children("span").removeClass('fa-chevron-up');
+        }
+        else {
+            var html = '<div style="padding-left: 30px;">\
+              <table class="extended_table dataTable">\
+                <thead>\
+                  <tr>\
+                    <th colspan="2">'+tr("Security Group")+'</th>\
+                    <th>'+tr("Protocol")+'</th>\
+                    <th>'+tr("Type")+'</th>\
+                    <th>'+tr("Range")+'</th>\
+                    <th>'+tr("Network")+'</th>\
+                    <th>'+tr("ICMP Type")+'</th>\
+                  </tr>\
+                <thead>\
+                <tbody>';
+
+            $.each(row.data().SECURITY_GROUP_RULES, function(index, elem){
+                var rule_st = sg_rule_to_st(this);
+
+                var new_tr = '<tr>\
+                  <td>'+this.SECURITY_GROUP_ID+'</td>\
+                  <td>'+this.SECURITY_GROUP_NAME+'</td>\
+                  <td>'+rule_st.PROTOCOL+'</td>\
+                  <td>'+rule_st.RULE_TYPE+'</td>\
+                  <td>'+rule_st.RANGE+'</td>\
+                  <td>'+rule_st.NETWORK+'</td>\
+                  <td>'+rule_st.ICMP_TYPE+'</td>\
+                </tr>'
+
+                html += new_tr;
+            });
+
+            row.child( html ).show();
+            $(this).children("span").removeClass('fa-chevron-down');
+            $(this).children("span").addClass('fa-chevron-up');
+        }
+    } );
+
 }
 
 function printCapacity(vm_info){
@@ -2304,13 +2445,15 @@ function printCapacity(vm_info){
 
     html += '\
       <div class="row">\
-        <div class="large-6 columns">\
+        <div class="large-9 columns">\
            <table class="info_table dataTable extended_table">\
              <thead>\
                <tr>\
                   <th>'+tr("CPU")+'</th>\
                   <th>'+tr("VCPU")+'</th>\
                   <th>'+tr("MEMORY")+'</th>\
+                  <th>'+tr("Cost / CPU")+'</th>\
+                  <th>'+tr("Cost / MByte")+'</th>\
                   <th></th>\
                 </tr>\
              </thead>\
@@ -2319,6 +2462,8 @@ function printCapacity(vm_info){
                   <td id="cpu_info">' + vm_info.TEMPLATE.CPU + '</td>\
                   <td id="vcpu_info">' + (vm_info.TEMPLATE.VCPU ? vm_info.TEMPLATE.VCPU : '-') + '</td>\
                   <td id="memory_info" one_value="'+vm_info.TEMPLATE.MEMORY+'">' + humanize_size_from_mb(vm_info.TEMPLATE.MEMORY) + '</td>\
+                  <td id="cpu_cost_info">' + (vm_info.TEMPLATE.CPU_COST ? vm_info.TEMPLATE.CPU_COST : '-') + '</td>\
+                  <td id="memory_cost_info" >' + (vm_info.TEMPLATE.MEMORY_COST ? vm_info.TEMPLATE.MEMORY_COST : '-') + '</td>\
                   <td>';
 
     if (Config.isTabActionEnabled("vms-tab", "VM.resize")) {
@@ -2934,29 +3079,22 @@ function updateVNCState(rfb, state, oldstate, msg) {
     sb = $D('VNC_status_bar');
     cad = $D('sendCtrlAltDelButton');
     switch (state) {
-    case 'failed':
-    case 'fatal':
-        klass = "VNC_status_error";
-        break;
-    case 'normal':
-        klass = "VNC_status_normal";
-        break;
-    case 'disconnected':
-    case 'loaded':
-        klass = "VNC_status_normal";
-        break;
-    case 'password':
-        klass = "VNC_status_warn";
-        break;
-    default:
-        klass = "VNC_status_warn";
+        case 'failed':       level = "error";  break;
+        case 'fatal':        level = "error";  break;
+        case 'normal':       level = "normal"; break;
+        case 'disconnected': level = "normal"; break;
+        case 'loaded':       level = "normal"; break;
+        default:             level = "warn";   break;
     }
 
-    if (state === "normal") { cad.disabled = false; }
-    else                    { cad.disabled = true; }
+    if (state === "normal") {
+        cad.disabled = false;
+    } else {
+        cad.disabled = true;
+    }
 
     if (typeof(msg) !== 'undefined') {
-        sb.setAttribute("class", klass);
+        sb.setAttribute("class", "noVNC_status_" + level);
         s.innerHTML = msg;
     }
 }
@@ -2974,11 +3112,11 @@ function setupVNC(){
     <div class="large-12 columns">\
       <h3 class="subheader" id="vnc_dialog">'+tr("VNC")+' \
           <span id="VNC_status">'+tr("Loading")+'</span>\
-          <span id="VNC_buttons">\
-            <input type=button value="Send CtrlAltDel" id="sendCtrlAltDelButton">\
             <a id="open_in_a_new_window" href="" target="_blank" title="'+tr("Open in a new window")+'">\
               <i class="fa fa-external-link detach-vnc-icon"/>\
             </a>\
+          <span id="VNC_buttons" class="right">\
+            <input type=button value="Send CtrlAltDel" id="sendCtrlAltDelButton">\
           </span>\
       </h3>\
     </div>\
@@ -3022,6 +3160,58 @@ function setupVNC(){
     });
 }
 
+
+//setups VNC application
+function setupSPICE(){
+
+    //Append to DOM
+    dialogs_context.append('<div id="spice_dialog" style="width:auto; max-width:70%"></div>');
+    $spice_dialog = $('#spice_dialog',dialogs_context);
+    var dialog = $spice_dialog;
+
+    dialog.html('\
+  <div class="row">\
+    <div class="large-12 columns">\
+      <h3 class="subheader" id="spice_dialog">'+tr("SPICE")+' \
+          <span id="vnc_buttons">\
+            <a id="open_in_a_new_window_spice" href="" target="_blank" title="'+tr("Open in a new window")+'">\
+              <i class="fa fa-external-link detach-spice-icon"/>\
+            </a>\
+          </span>\
+      </h3>\
+    </div>\
+  </div>\
+  <div class="reveal-body" style="width:100%; overflow-x:overlay">\
+    <div id="spice-area">\
+        <div id="spice-screen" class="spice-screen"></div>\
+    </div>\
+  </div>\
+  <a class="close-reveal-modal">&#215;</a>\
+');
+
+    dialog.addClass("reveal-modal large max-height").attr("data-reveal", "");
+
+    $spice_dialog.foundation();
+
+    $("#open_in_a_new_window_spice", dialog).on("click", function(){
+      $spice_dialog.foundation('reveal', 'close');
+    });
+
+    $('.spice').live("click",function(){
+        var id = $(this).attr('vm_id');
+
+        //Ask server for connection params
+        if (!vnc_lock) {
+            spice_lock = true
+            Sunstone.runAction("VM.startspice_action",id);
+            return false;
+        } else {
+            notifyError(tr("SPICE Connection in progress"))
+            return false;
+        }
+    });
+}
+
 // Open vnc window
 function popUpVnc(){
     $.each(getSelectedNodes(dataTable_vMachines), function(index, elem) {
@@ -3035,13 +3225,26 @@ function popUpVnc(){
     });
 }
 
+// Open vnc window
+function popUpSPICE(){
+    $.each(getSelectedNodes(dataTable_vMachines), function(index, elem) {
+        if (!spice_lock) {
+            spice_lock = true
+            Sunstone.runAction("VM.startspice_action", elem);
+        } else {
+            notifyError(tr("SPICE Connection in progress"))
+            return false;
+        }
+    });
+}
+
 function vncCallback(request,response){
     rfb = new RFB({'target':       $D('VNC_canvas'),
                    'encrypt':      config['user_config']['vnc_wss'] == "yes",
                    'true_color':   true,
                    'local_cursor': true,
                    'shared':       true,
-                   'updateState':  updateVNCState});
+                   'onUpdateState':  updateVNCState});
 
     var proxy_host = window.location.hostname;
     var proxy_port = config['system_config']['vnc_proxy_port'];
@@ -3069,22 +3272,88 @@ function vncCallback(request,response){
     });
 }
 
-// returns true if the vnc button should be enabled
-function enableVnc(vm){
-    var graphics = vm.TEMPLATE.GRAPHICS;
-    var state = OpenNebula.Helper.resource_state("vm_lcm",vm.LCM_STATE);
+function spiceCallback(request,response){
+    var host = null, port = null;
+    var sc;
 
-    return (graphics &&
-        graphics.TYPE &&
-        graphics.TYPE.toLowerCase() == "vnc" &&
-        $.inArray(state, VNCstates)!=-1);
+    function spice_error(e) {
+        disconnect();
+    }
+
+    function disconnect() {
+        if (sc) {
+            sc.stop();
+        }
+    }
+
+    function agent_connected(sc)
+    {
+        window.addEventListener('resize', handle_resize);
+        window.spice_connection = this;
+
+        resize_helper(this);
+    }
+
+    var host, port, password, scheme = "ws://", uri, token, vm_name;
+
+    if (config['user_config']['vnc_wss'] == "yes") {
+        scheme = "wss://";
+    }
+
+    host = window.location.hostname;
+    port = config['system_config']['vnc_proxy_port'];
+    password = response["password"];
+    token = response["token"];
+    vm_name = response["vm_name"];
+
+    if ((!host) || (!port)) {
+        console.log("must specify host and port in URL");
+        return;
+    }
+
+    if (sc) {
+        sc.stop();
+    }
+
+    uri = scheme + host + ":" + port + "?token=" + token;
+
+    try {
+        sc = new SpiceMainConn({uri: uri, screen_id: "spice-screen", dump_id: "debug-div",
+                    message_id: "", password: password, onerror: spice_error, onagent: agent_connected });
+    }
+    catch (e) {
+        alert(e.toString());
+        disconnect();
+    }
+
+    var url = "spice?";
+    url += "host=" + host;
+    url += "&port=" + port;
+    url += "&token=" + token;
+    url += "&password=" + password;
+    url += "&encrypt=" + config['user_config']['vnc_wss'];
+    url += "&title=" + vm_name;
+
+    $("#open_in_a_new_window_spice").attr('href', url)
+    $spice_dialog.foundation("reveal", "open");
+    spice_lock = false;
+
+    $spice_dialog.off("closed");
+    $spice_dialog.on("closed", function () {
+      disconnect();
+    });
 }
+
 
 function vncIcon(vm){
     var gr_icon;
 
     if (enableVnc(vm)){
         gr_icon = '<a class="vnc" href="#" vm_id="'+vm.ID+'">';
+        gr_icon += '<i class="fa fa-desktop" style="color: rgb(111, 111, 111)"/>';
+    }
+    else if (enableSPICE(vm)){
+        gr_icon = '<a class="spice" href="#" vm_id="'+vm.ID+'">';
         gr_icon += '<i class="fa fa-desktop" style="color: rgb(111, 111, 111)"/>';
     }
     else {
@@ -3123,7 +3392,7 @@ $(document).ready(function(){
       });
 
       $('#vms_search').keyup(function(){
-        dataTable_vMachines.fnFilter( $(this).val() );
+        dataTable_vMachines.fnFilter( $(this).val(), null, true, false );
       })
 
       dataTable_vMachines.on('draw', function(){
@@ -3134,6 +3403,7 @@ $(document).ready(function(){
       Sunstone.runAction("VM.list");
 
       setupVNC();
+      setupSPICE();
       hotpluggingOps();
       setup_vm_network_tab();
       setup_vm_capacity_tab();

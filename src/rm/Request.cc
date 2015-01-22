@@ -601,6 +601,8 @@ string Request::object_name(PoolObjectSQL::ObjectType ob)
             return "document";
         case PoolObjectSQL::ZONE:
             return "zone";
+        case PoolObjectSQL::SECGROUP:
+            return "security group";
         default:
             return "-";
       }

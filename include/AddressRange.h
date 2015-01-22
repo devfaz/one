@@ -216,6 +216,13 @@ public:
     int free_addr_by_range(PoolObjectSQL::ObjectType ot, int obid,
         const string& mac, unsigned int rsize);
 
+    /**
+     * Adds the relevant AR definition attributes to the Security Group rule
+     *
+     * @param rule rule to modify
+     */
+    void process_security_rule(VectorAttribute * rule);
+
     // *************************************************************************
     // Address Reservation
     // *************************************************************************
@@ -321,6 +328,15 @@ public:
             VectorAttribute *   vup,
             bool                keep_restricted,
             string&             error_msg);
+
+    /**
+     *  Get the security groups for this AR.
+     *    @return a reference to the security group set
+     */
+    const set<int>& get_security_groups() const
+    {
+        return security_groups;
+    }
 
     /*
      *  add_ar from AddressRangePool needs to access the internal representation
@@ -484,6 +500,11 @@ private:
     unsigned int ula6[2];
 
     /**
+     *  Security Group IDs for this Address Range
+     */
+    set<int> security_groups;
+
+    /**
      *  The Address Range attributes as a Template VectorAttribute. This is
      *  used to generate XML or a template representation of the AR.
      */
@@ -515,6 +536,13 @@ private:
      *  The restricted attributes from oned.conf
      */
     static set<string> restricted_attributes;
+
+    /**
+     *  Attributes to be process for Security Group rules
+     */
+    const static char * SG_RULE_ATTRIBUTES[];
+
+    const static int  NUM_SG_RULE_ATTRIBUTES;
 };
 
 #endif

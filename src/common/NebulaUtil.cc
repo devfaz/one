@@ -27,6 +27,9 @@
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
+#include <math.h>
+#include <sys/types.h>
+#include <regex.h>
 
 using namespace std;
 
@@ -237,4 +240,46 @@ vector<string> one_util::split(const string& st, char delim, bool clean_empty)
     }
 
     return parts;
+}
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+string one_util::float_to_str(const float &num)
+{
+    ostringstream oss;
+
+    if ( num == ceil(num) )
+    {
+        oss.precision(0);
+    }
+    else
+    {
+        oss.precision(2);
+    }
+
+    oss << fixed << num;
+
+    return oss.str();
+}
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+int one_util::regex_match(const char *pattern, const char *subject)
+{
+    int rc;
+    regex_t re;
+
+    rc = regcomp(&re, pattern, REG_EXTENDED|REG_NOSUB);
+
+    if (rc != 0)
+    {
+        return(rc);
+    }
+
+    rc = regexec(&re, subject, 0, 0, 0);
+    regfree(&re);
+
+    return rc;
 }

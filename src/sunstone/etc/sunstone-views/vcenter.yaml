@@ -15,7 +15,8 @@ enabled_tabs:
     clusters-tab: true
     hosts-tab: true
     datastores-tab: false
-    vnets-tab: false
+    vnets-tab: true
+    secgroups-tab: false
     marketplace-tab: false
     oneflow-dashboard: true
     oneflow-services: true
@@ -26,6 +27,8 @@ enabled_tabs:
     enterprise-tab: true
     zones-tab: true
 autorefresh: true
+features:
+    showback: true
 tabs:
     dashboard-tab:
         panel_tabs:
@@ -51,6 +54,8 @@ tabs:
         panel_tabs:
             user_info_tab: true
             user_quotas_tab: true
+            user_accounting_tab: true
+            user_showback_tab: true
         table_columns:
             - 0         # Checkbox
             - 1         # ID
@@ -74,7 +79,11 @@ tabs:
             User.delete: true
     groups-tab:
         panel_tabs:
+            group_info_tab: true
             group_quotas_tab: true
+            group_providers_tab: true
+            group_accounting_tab: true
+            group_shoback_tab: true
         table_columns:
             - 0         # Checkbox
             - 1         # ID
@@ -130,6 +139,7 @@ tabs:
             - 9       # IPs
             #- 10      # Start Time
             - 11      # VNC
+            #- 12      # Hidden Template
         actions:
             VM.refresh: true
             VM.create_dialog: true
@@ -160,8 +170,8 @@ tabs:
             VM.attachdisk: true
             VM.detachdisk: true
             VM.saveas: false
-            VM.attachnic: false
-            VM.detachnic: false
+            VM.attachnic: true
+            VM.detachnic: true
             VM.snapshot_create: true
             VM.snapshot_revert: true
             VM.snapshot_delete: true
@@ -344,6 +354,7 @@ tabs:
         actions:
             Network.refresh: true
             Network.create_dialog: true
+            Network.update_dialog: true
             Network.addtocluster: true
             Network.chown: true
             Network.chgrp: true
@@ -354,6 +365,24 @@ tabs:
             Network.add_ar: true
             Network.remove_ar: true
             Network.update_ar: true
+    secgroups-tab:
+        panel_tabs:
+            security_group_info_tab: true
+        table_columns:
+            - 0         # Checkbox
+            - 1         # ID
+            - 2         # Owner
+            - 3         # Group
+            - 4         # Name
+        actions:
+            SecurityGroup.refresh: true
+            SecurityGroup.create_dialog: true
+            SecurityGroup.update_dialog: true
+            SecurityGroup.chown: true
+            SecurityGroup.chgrp: true
+            SecurityGroup.chmod: true
+            SecurityGroup.clone_dialog: true
+            SecurityGroup.delete: true
     marketplace-tab:
         panel_tabs:
             marketplace_info_tab: true

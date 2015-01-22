@@ -175,6 +175,19 @@ int AddressRange::from_vattr(VectorAttribute *vattr, string& error_msg)
         vattr->replace("VLAN", "YES");
     }
 
+    /* ------------------------- Security Groups ---------------------------- */
+
+    value = vattr->vector_value("SECURITY_GROUPS");
+
+    if (value.empty())
+    {
+        security_groups.clear();
+    }
+    else
+    {
+        one_util::split_unique(value, ',', security_groups);
+    }
+
     /* ------------------------ AR Internal Data ---------------------------- */
 
     vattr->replace("AR_ID", id);
@@ -261,8 +274,6 @@ int AddressRange::update_attributes(
 
     if (vup->vector_value("SIZE", new_size) == 0)
     {
-        map<unsigned int, long long> itup;
-
         if (is_reservation && new_size != size)
         {
             error_msg = "The SIZE of a reservation cannot be changed.";
@@ -276,6 +287,8 @@ int AddressRange::update_attributes(
 
             return -1;
         }
+
+        next = 0;
     }
     else
     {
@@ -304,6 +317,15 @@ int AddressRange::update_attributes(
 
     vup->replace("GLOBAL_PREFIX", new_global);
     vup->replace("ULA_PREFIX", new_ula);
+
+    string value = vup->vector_value("SECURITY_GROUPS");
+
+    security_groups.clear();
+
+    if (!value.empty())
+    {
+        one_util::split_unique(value, ',', security_groups);
+    }
 
     /* Replace with the new attributes */
 
@@ -341,6 +363,15 @@ int AddressRange::from_vattr_db(VectorAttribute *vattr)
     rc += prefix6_to_i(vattr->vector_value("ULA_PREFIX"), ula6);
 
     rc += attr_to_allocated(vattr->vector_value("ALLOCATED"));
+
+    value = vattr->vector_value("SECURITY_GROUPS");
+
+    security_groups.clear();
+
+    if (!value.empty())
+    {
+        one_util::split_unique(value, ',', security_groups);
+    }
 
     if (type == NONE)
     {
@@ -1070,6 +1101,30 @@ int AddressRange::free_addr_by_range(PoolObjectSQL::ObjectType ot, int obid,
     return freed;
 }
 
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+const char * AddressRange::SG_RULE_ATTRIBUTES[] = {
+    "AR_ID",
+    "TYPE",
+    "SIZE",
+    "MAC",
+    "IP"};
+
+const int  AddressRange::NUM_SG_RULE_ATTRIBUTES = 5;
+
+void AddressRange::process_security_rule(VectorAttribute * rule)
+{
+    for ( int i = 0; i < NUM_SG_RULE_ATTRIBUTES; i++ )
+    {
+        string st = attr->vector_value(SG_RULE_ATTRIBUTES[i]);
+
+        if ( st != "" )
+        {
+            rule->replace(SG_RULE_ATTRIBUTES[i], st);
+        }
+    }
+}
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */

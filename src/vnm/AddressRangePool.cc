@@ -462,6 +462,23 @@ int AddressRangePool::get_attribute(const char * name, int& value,
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
+const set<int>& AddressRangePool::get_security_groups(int ar_id) const
+{
+    map<unsigned int, AddressRange *>::const_iterator it = ar_pool.find(ar_id);
+
+    if (it == ar_pool.end())
+    {
+        static set<int> empty_set;
+
+        return empty_set;
+    }
+
+    return it->second->get_security_groups();
+}
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
 int AddressRangePool::get_ar_parent(int ar_id) const
 {
     int rc;
@@ -670,6 +687,26 @@ int AddressRangePool::reserve_addr_by_mac(int vid, unsigned int rsize,
     }
 
     return -1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+void AddressRangePool::process_security_rule(
+        VectorAttribute *        rule,
+        vector<VectorAttribute*> &new_rules)
+{
+    map<unsigned int, AddressRange *>::iterator it;
+
+    for (it=ar_pool.begin(); it!=ar_pool.end(); it++)
+    {
+        VectorAttribute* new_rule = new VectorAttribute(
+                                    "SECURITY_GROUP_RULE", rule->value());
+
+        it->second->process_security_rule(new_rule);
+
+        new_rules.push_back(new_rule);
+    }
 }
 
 /* -------------------------------------------------------------------------- */

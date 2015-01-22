@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 
 #include <libxml/parser.h>
 
@@ -224,6 +225,18 @@ public:
     int free_addr_by_range(unsigned int arid, PoolObjectSQL::ObjectType ot,
             int obid, const string& mac, unsigned int rsize);
 
+    /**
+     * From a Security Group rule that uses this vnet, creates a new rule
+     * copy for each AR.
+     *
+     * @param rule original rule
+     * @param new_rules vector where the new rules will be placed. Rules must
+     * be deleted by the caller
+     */
+    void process_security_rule(
+            VectorAttribute *        rule,
+            vector<VectorAttribute*> &new_rules);
+
     // *************************************************************************
     // Address reservation
     // *************************************************************************
@@ -313,6 +326,12 @@ public:
      *    @return 0 on success
      */
     int get_attribute(const char * name, int& value, int ar_id) const;
+
+    /**
+     *  Gets a reference to a the security group set of an AR
+     *    @return a reference to the security group set or empty set if error
+     */
+    const set<int>& get_security_groups(int ar_id) const;
 
     /**
      *  Generate a XML representation of the Address Range Pool

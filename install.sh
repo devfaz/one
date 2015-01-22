@@ -262,6 +262,7 @@ VAR_DIRS="$VAR_LOCATION/remotes \
           $VAR_LOCATION/remotes/vmm/az \
           $VAR_LOCATION/remotes/vnm \
           $VAR_LOCATION/remotes/vnm/802.1Q \
+          $VAR_LOCATION/remotes/vnm/vxlan \
           $VAR_LOCATION/remotes/vnm/dummy \
           $VAR_LOCATION/remotes/vnm/ebtables \
           $VAR_LOCATION/remotes/vnm/fw \
@@ -328,6 +329,7 @@ SUNSTONE_DIRS="$SUNSTONE_LOCATION/routes \
                $SUNSTONE_LOCATION/public/locale/zh_CN \
                $SUNSTONE_LOCATION/public/vendor \
                $SUNSTONE_LOCATION/public/vendor/crypto-js \
+               $SUNSTONE_LOCATION/public/vendor/spice \
                $SUNSTONE_LOCATION/public/vendor/noVNC \
                $SUNSTONE_LOCATION/public/vendor/noVNC/web-socket-js \
                $SUNSTONE_LOCATION/public/vendor/4.0 \
@@ -452,6 +454,7 @@ INSTALL_FILES=(
     DATASTORE_DRIVER_DEV_SCRIPTS:$VAR_LOCATION/remotes/datastore/dev
     NETWORK_FILES:$VAR_LOCATION/remotes/vnm
     NETWORK_8021Q_FILES:$VAR_LOCATION/remotes/vnm/802.1Q
+    NETWORK_VXLAN_FILES:$VAR_LOCATION/remotes/vnm/vxlan
     NETWORK_DUMMY_FILES:$VAR_LOCATION/remotes/vnm/dummy
     NETWORK_EBTABLES_FILES:$VAR_LOCATION/remotes/vnm/ebtables
     NETWORK_FW_FILES:$VAR_LOCATION/remotes/vnm/fw
@@ -511,6 +514,7 @@ INSTALL_SUNSTONE_FILES=(
     SUNSTONE_ROUTES_FILES:$SUNSTONE_LOCATION/routes
     SUNSTONE_PUBLIC_CSS_FILES:$SUNSTONE_LOCATION/public/css
     SUNSTONE_PUBLIC_VENDOR_CRYPTOJS:$SUNSTONE_LOCATION/public/vendor/crypto-js
+    SUNSTONE_PUBLIC_VENDOR_SPICE:$SUNSTONE_LOCATION/public/vendor/spice
     SUNSTONE_PUBLIC_VENDOR_NOVNC:$SUNSTONE_LOCATION/public/vendor/noVNC
     SUNSTONE_PUBLIC_VENDOR_NOVNC_WEBSOCKET:$SUNSTONE_LOCATION/public/vendor/noVNC/web-socket-js
     SUNSTONE_PUBLIC_NEW_VENDOR_FLOT:$SUNSTONE_LOCATION/public/vendor/4.0/flot
@@ -595,6 +599,7 @@ BIN_FILES="src/nebula/oned \
            src/scheduler/src/sched/mm_sched \
            src/cli/onevm \
            src/cli/oneacct \
+           src/cli/oneshowback \
            src/cli/onehost \
            src/cli/onevnet \
            src/cli/oneuser \
@@ -607,6 +612,7 @@ BIN_FILES="src/nebula/oned \
            src/cli/onezone \
            src/cli/oneflow \
            src/cli/oneflow-template \
+           src/cli/onesecgroup \
            src/cli/onevcenter \
            src/onedb/onedb \
            src/mad/utils/tty_expect \
@@ -932,15 +938,29 @@ AUTH_PLAIN_FILES="src/authm_mad/remotes/plain/authenticate"
 # Virtual Network Manager drivers to be installed under $REMOTES_LOCATION/vnm
 #-------------------------------------------------------------------------------
 
-NETWORK_FILES="src/vnm_mad/remotes/OpenNebulaNetwork.rb \
+NETWORK_FILES="src/vnm_mad/remotes/lib/vnm_driver.rb \
+               src/vnm_mad/remotes/lib/vnmmad.rb \
                src/vnm_mad/remotes/OpenNebulaNetwork.conf \
-               src/vnm_mad/remotes/Firewall.rb \
-               src/vnm_mad/remotes/OpenNebulaNic.rb"
+               src/vnm_mad/remotes/lib/fw_driver.rb \
+               src/vnm_mad/remotes/lib/sg_driver.rb \
+               src/vnm_mad/remotes/lib/address.rb \
+               src/vnm_mad/remotes/lib/command.rb \
+               src/vnm_mad/remotes/lib/vm.rb \
+               src/vnm_mad/remotes/lib/vlan.rb \
+               src/vnm_mad/remotes/lib/security_groups.rb \
+               src/vnm_mad/remotes/lib/security_groups_iptables.rb \
+               src/vnm_mad/remotes/lib/nic.rb"
 
 NETWORK_8021Q_FILES="src/vnm_mad/remotes/802.1Q/clean \
                     src/vnm_mad/remotes/802.1Q/post \
                     src/vnm_mad/remotes/802.1Q/pre \
-                    src/vnm_mad/remotes/802.1Q/HostManaged.rb"
+                    src/vnm_mad/remotes/802.1Q/vlan_tag_driver.rb"
+
+NETWORK_VXLAN_FILES="src/vnm_mad/remotes/vxlan/clean \
+                    src/vnm_mad/remotes/vxlan/post \
+                    src/vnm_mad/remotes/vxlan/pre \
+                    src/vnm_mad/remotes/vxlan/vxlan_driver.rb"
+
 
 NETWORK_DUMMY_FILES="src/vnm_mad/remotes/dummy/clean \
                     src/vnm_mad/remotes/dummy/post \
@@ -1202,7 +1222,8 @@ ONEDB_SHARED_MIGRATOR_FILES="src/onedb/shared/2.0_to_2.9.80.rb \
                              src/onedb/shared/4.5.80_to_4.6.0.rb"
 
 ONEDB_LOCAL_MIGRATOR_FILES="src/onedb/local/4.5.80_to_4.7.80.rb \
-                            src/onedb/local/4.7.80_to_4.9.80.rb"
+                            src/onedb/local/4.7.80_to_4.9.80.rb \
+                            src/onedb/local/4.9.80_to_4.11.80.rb"
 
 #-------------------------------------------------------------------------------
 # Configuration files for OpenNebula, to be installed under $ETC_LOCATION
@@ -1234,7 +1255,8 @@ VMM_EXEC_ETC_FILES="src/vmm_mad/exec/vmm_execrc \
                   src/vmm_mad/exec/vmm_exec_kvm.conf \
                   src/vmm_mad/exec/vmm_exec_xen3.conf \
                   src/vmm_mad/exec/vmm_exec_xen4.conf \
-                  src/vmm_mad/exec/vmm_exec_vmware.conf"
+                  src/vmm_mad/exec/vmm_exec_vmware.conf \
+                  src/vmm_mad/exec/vmm_exec_vcenter.conf"
 
 #-------------------------------------------------------------------------------
 # Hook Manager driver config. files, to be installed under $ETC_LOCATION/hm
@@ -1303,6 +1325,8 @@ RUBY_OPENNEBULA_LIB_FILES="src/oca/ruby/opennebula/acl_pool.rb \
                             src/oca/ruby/opennebula/image.rb \
                             src/oca/ruby/opennebula/pool_element.rb \
                             src/oca/ruby/opennebula/pool.rb \
+                            src/oca/ruby/opennebula/security_group_pool.rb \
+                            src/oca/ruby/opennebula/security_group.rb \
                             src/oca/ruby/opennebula/system.rb \
                             src/oca/ruby/opennebula/template_pool.rb \
                             src/oca/ruby/opennebula/template.rb \
@@ -1465,7 +1489,8 @@ ONE_CLI_LIB_FILES="src/cli/one_helper/onegroup_helper.rb \
                    src/cli/one_helper/onedatastore_helper.rb \
                    src/cli/one_helper/onecluster_helper.rb \
                    src/cli/one_helper/onezone_helper.rb \
-                   src/cli/one_helper/oneacct_helper.rb"
+                   src/cli/one_helper/oneacct_helper.rb \
+                   src/cli/one_helper/onesecgroup_helper.rb"
 
 CLI_BIN_FILES="src/cli/onevm \
                src/cli/onehost \
@@ -1480,7 +1505,9 @@ CLI_BIN_FILES="src/cli/onevm \
                src/cli/onezone \
                src/cli/oneflow \
                src/cli/oneflow-template \
-               src/cli/oneacct"
+               src/cli/oneacct \
+               src/cli/onesecgroup \
+               src/cli/oneshowback"
 
 CLI_CONF_FILES="src/cli/etc/onegroup.yaml \
                 src/cli/etc/onehost.yaml \
@@ -1493,7 +1520,9 @@ CLI_CONF_FILES="src/cli/etc/onegroup.yaml \
                 src/cli/etc/onedatastore.yaml \
                 src/cli/etc/onecluster.yaml \
                 src/cli/etc/onezone.yaml \
-                src/cli/etc/oneacct.yaml"
+                src/cli/etc/oneacct.yaml \
+                src/cli/etc/onesecgroup.yaml \
+                src/cli/etc/oneshowback.yaml"
 
 #-----------------------------------------------------------------------------
 # Sunstone files
@@ -1511,8 +1540,9 @@ SUNSTONE_ETC_FILES="src/sunstone/etc/sunstone-server.conf \
 SUNSTONE_ETC_VIEW_FILES="src/sunstone/etc/sunstone-views/admin.yaml \
                     src/sunstone/etc/sunstone-views/user.yaml \
                     src/sunstone/etc/sunstone-views/cloud.yaml \
+                    src/sunstone/etc/sunstone-views/cloud_vcenter.yaml \
                     src/sunstone/etc/sunstone-views/vdcadmin.yaml \
-		    src/sunstone/etc/sunstone-views/vcenter.yaml"
+		                src/sunstone/etc/sunstone-views/vcenter.yaml"
 
 SUNSTONE_MODELS_FILES="src/sunstone/models/OpenNebulaJSON.rb \
                        src/sunstone/models/SunstoneServer.rb \
@@ -1531,11 +1561,13 @@ SUNSTONE_MODELS_JSON_FILES="src/sunstone/models/OpenNebulaJSON/HostJSON.rb \
                     src/sunstone/models/OpenNebulaJSON/ClusterJSON.rb \
                     src/sunstone/models/OpenNebulaJSON/DatastoreJSON.rb \
                     src/sunstone/models/OpenNebulaJSON/VirtualNetworkJSON.rb \
-                    src/sunstone/models/OpenNebulaJSON/ZoneJSON.rb"
+                    src/sunstone/models/OpenNebulaJSON/ZoneJSON.rb \
+                    src/sunstone/models/OpenNebulaJSON/SecurityGroupJSON.rb"
 
 SUNSTONE_VIEWS_FILES="src/sunstone/views/index.erb \
                       src/sunstone/views/login.erb \
                       src/sunstone/views/vnc.erb \
+                      src/sunstone/views/spice.erb \
                       src/sunstone/views/_login_standard.erb \
                       src/sunstone/views/_login_x509.erb"
 
@@ -1567,7 +1599,8 @@ SUNSTONE_PUBLIC_JS_PLUGINS_FILES="\
                         src/sunstone/public/js/plugins/oneflow-services.js \
                         src/sunstone/public/js/plugins/oneflow-templates.js \
                         src/sunstone/public/js/plugins/support-tab.js \
-                        src/sunstone/public/js/plugins/zones-tab.js"
+                        src/sunstone/public/js/plugins/zones-tab.js \
+                        src/sunstone/public/js/plugins/secgroups-tab.js"
 
 SUNSTONE_ROUTES_FILES="src/sunstone/routes/oneflow.rb \
   src/sunstone/routes/vcenter.rb \
@@ -1620,7 +1653,7 @@ SUNSTONE_PUBLIC_NEW_VENDOR_FONTAWESOME_FONT="\
     src/sunstone/public/bower_components/fontawesome/fonts/FontAwesome.otf"
 
 SUNSTONE_PUBLIC_VENDOR_NOVNC="\
-    src/sunstone/public/bower_components/no-vnc/include/base.css \
+    src/sunstone/public/bower_components/no-vnc/include/novnc-custom.css \
     src/sunstone/public/bower_components/no-vnc/include/base64.js \
     src/sunstone/public/bower_components/no-vnc/include/black.css \
     src/sunstone/public/bower_components/no-vnc/include/blue.css \
@@ -1630,6 +1663,7 @@ SUNSTONE_PUBLIC_VENDOR_NOVNC="\
     src/sunstone/public/bower_components/no-vnc/include/jsunzip.js \
     src/sunstone/public/bower_components/no-vnc/include/keyboard.js \
     src/sunstone/public/bower_components/no-vnc/include/keysymdef.js \
+    src/sunstone/public/bower_components/no-vnc/include/keysym.js \
     src/sunstone/public/bower_components/no-vnc/include/logo.js \
     src/sunstone/public/bower_components/no-vnc/include/Orbitron700.ttf \
     src/sunstone/public/bower_components/no-vnc/include/Orbitron700.woff \
@@ -1644,6 +1678,36 @@ SUNSTONE_PUBLIC_VENDOR_NOVNC_WEBSOCKET="\
     src/sunstone/public/bower_components/no-vnc/include/web-socket-js/web_socket.js \
     src/sunstone/public/bower_components/no-vnc/include/web-socket-js/swfobject.js \
     src/sunstone/public/bower_components/no-vnc/include/web-socket-js/WebSocketMain.swf"
+
+SUNSTONE_PUBLIC_VENDOR_SPICE="\
+    src/sunstone/public/bower_components/spice-html5/spicearraybuffer.js \
+    src/sunstone/public/bower_components/spice-html5/enums.js \
+    src/sunstone/public/bower_components/spice-html5/atKeynames.js \
+    src/sunstone/public/bower_components/spice-html5/utils.js \
+    src/sunstone/public/bower_components/spice-html5/png.js \
+    src/sunstone/public/bower_components/spice-html5/lz.js \
+    src/sunstone/public/bower_components/spice-html5/quic.js \
+    src/sunstone/public/bower_components/spice-html5/bitmap.js \
+    src/sunstone/public/bower_components/spice-html5/spicedataview.js \
+    src/sunstone/public/bower_components/spice-html5/spicetype.js \
+    src/sunstone/public/bower_components/spice-html5/spicemsg.js \
+    src/sunstone/public/bower_components/spice-html5/wire.js \
+    src/sunstone/public/bower_components/spice-html5/spiceconn.js \
+    src/sunstone/public/bower_components/spice-html5/display.js \
+    src/sunstone/public/bower_components/spice-html5/main.js \
+    src/sunstone/public/bower_components/spice-html5/inputs.js \
+    src/sunstone/public/bower_components/spice-html5/webm.js \
+    src/sunstone/public/bower_components/spice-html5/playback.js \
+    src/sunstone/public/bower_components/spice-html5/simulatecursor.js \
+    src/sunstone/public/bower_components/spice-html5/cursor.js \
+    src/sunstone/public/bower_components/spice-html5/thirdparty/jsbn.js \
+    src/sunstone/public/bower_components/spice-html5/thirdparty/rsa.js \
+    src/sunstone/public/bower_components/spice-html5/thirdparty/prng4.js \
+    src/sunstone/public/bower_components/spice-html5/thirdparty/rng.js \
+    src/sunstone/public/bower_components/spice-html5/thirdparty/sha1.js \
+    src/sunstone/public/bower_components/spice-html5/ticket.js \
+    src/sunstone/public/bower_components/spice-html5/resize.js \
+    src/sunstone/public/bower_components/spice-html5/spice-custom.css"
 
 # end bower
 
@@ -1824,6 +1888,7 @@ ONEFLOW_LIB_MODELS_FILES="src/flow/lib/models/role.rb \
 #-----------------------------------------------------------------------------
 
 MAN_FILES="share/man/oneacct.1.gz \
+        share/man/oneshowback.1.gz \
         share/man/oneacl.1.gz \
         share/man/onehost.1.gz \
         share/man/oneimage.1.gz \
@@ -1836,8 +1901,10 @@ MAN_FILES="share/man/oneacct.1.gz \
         share/man/onedatastore.1.gz \
         share/man/onecluster.1.gz \
         share/man/onezone.1.gz \
+        share/man/onevcenter.1.gz \
         share/man/oneflow.1.gz \
         share/man/oneflow-template.1.gz \
+        share/man/onesecgroup.1.gz \
         share/man/econe-allocate-address.1.gz \
         share/man/econe-associate-address.1.gz \
         share/man/econe-attach-volume.1.gz \

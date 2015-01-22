@@ -19,9 +19,15 @@
 $: << File.dirname(__FILE__)
 $: << File.join(File.dirname(__FILE__), "..")
 
-require 'OpenNebulaNetwork'
-require 'Firewall'
+require 'vnmmad'
 
-fw = OpenNebulaFirewall.from_base64(ARGV[0])
+template64 = ARGV[0]
 
-fw.deactivate
+begin
+    filter_driver = VNMMAD::VNMDriver.filter_driver(template64)
+    filter_driver.deactivate
+rescue Exception => e
+    OpenNebula.log_error(e.message)
+    OpenNebula.log_error(e.backtrace)
+    exit 1
+end
